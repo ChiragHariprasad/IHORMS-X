@@ -1,0 +1,8 @@
+run_id,timestamp_ist,nodeid,test_name,status,duration_sec,http_method,endpoint,allowed_roles
+b083315e-06f6-4bf3-a1b3-6ba11e7a0669,2026-01-15T23:42:31+05:30,tests/test_integration_serious.py::test_st01_login_flow_real_db,test_st01_login_flow_real_db,passed,0.000283,,,
+b083315e-06f6-4bf3-a1b3-6ba11e7a0669,2026-01-15T23:42:31+05:30,tests/test_integration_serious.py::test_st02_me_returns_tenant,test_st02_me_returns_tenant,passed,0.007184,,,
+b083315e-06f6-4bf3-a1b3-6ba11e7a0669,2026-01-15T23:42:31+05:30,tests/test_integration_serious.py::test_st03_doctor_appointments_returns_200,test_st03_doctor_appointments_returns_200,passed,0.036073,,,
+b083315e-06f6-4bf3-a1b3-6ba11e7a0669,2026-01-15T23:42:32+05:30,tests/test_integration_serious.py::test_st04_patient_search_same_tenant_success,test_st04_patient_search_same_tenant_success,passed,0.043831,,,
+b083315e-06f6-4bf3-a1b3-6ba11e7a0669,2026-01-15T23:42:32+05:30,tests/test_integration_serious.py::test_st05_patient_search_cross_tenant_blocked,test_st05_patient_search_cross_tenant_blocked,passed,0.026643,,,
+b083315e-06f6-4bf3-a1b3-6ba11e7a0669,2026-01-15T23:42:32+05:30,tests/test_integration_serious.py::test_st06_medical_history_view_creates_logs,test_st06_medical_history_view_creates_logs,passed,0.08605,,,
+b083315e-06f6-4bf3-a1b3-6ba11e7a0669,2026-01-15T23:42:32+05:30,tests/test_integration_serious.py::test_st07_cross_org_doctor_blocked_from_history,test_st07_cross_org_doctor_blocked_from_history,passed,0.014913,,,
