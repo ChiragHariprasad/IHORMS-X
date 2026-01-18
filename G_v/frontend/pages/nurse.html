@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nurse Dashboard - IHORMS</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>IHORMS</h2>
+                <p>Nursing Portal</p>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="active" data-tab="wards">
+                    <i class="fas fa-hospital-user"></i> Ward Management
+                </a>
+                <a href="#" data-tab="telemetry">
+                    <i class="fas fa-heart-pulse"></i> Record Vitals
+                </a>
+                <a href="#" data-tab="alerts">
+                    <i class="fas fa-bell"></i> Active Alerts
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="page-header">
+                <h1 id="pageTitle">Ward Management</h1>
+                <div class="user-info">
+                    <div class="avatar" id="userAvatar">NS</div>
+                    <span id="userName">Nurse</span>
+                    <button class="btn btn-logout" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </header>
+
+            <!-- Wards Tab -->
+            <div id="wardsTab" class="tab-content active">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-bed"></i> Room Availability</h3>
+                        <button class="btn btn-outline btn-sm" onclick="loadWards()">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Room #</th>
+                                    <th>Type</th>
+                                    <th>Capacity</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="wardsTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Telemetry Tab -->
+            <div id="telemetryTab" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-calendar-check"></i> Today's Appointments</h3>
+                        <p class="text-muted">Select an appointment to record patient vitals</p>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Patient</th>
+                                    <th>Doctor</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="appointmentsTable">
+                                <tr>
+                                    <td colspan="5" class="loading">
+                                        <div class="spinner"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts Tab (Placeholder) -->
+            <div id="alertsTab" class="tab-content">
+                <div class="card">
+                    <div class="empty-state">
+                        <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                        <h3>All Systems Normal</h3>
+                        <p>No active telemetry alerts at this time.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Telemetry Modal -->
+    <div class="modal-overlay" id="telemetryModal">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-file-medical"></i> Record Patient Vitals</h3>
+                <button class="modal-close" onclick="closeModal('telemetryModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="telemetryForm">
+                    <input type="hidden" id="tel_patient_id" name="patient_id">
+                    <input type="hidden" id="tel_appointment_id" name="appointment_id">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fas fa-heart"></i> Heart Rate (bpm)</label>
+                            <input type="number" class="form-control" name="heart_rate" required placeholder="72">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-temperature-high"></i> Temperature (°C)</label>
+                            <input type="number" step="0.1" class="form-control" name="temperature" required
+                                placeholder="37.0">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fas fa-gauge-high"></i> Systolic BP</label>
+                            <input type="number" class="form-control" name="blood_pressure_systolic" required
+                                placeholder="120">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-gauge"></i> Diastolic BP</label>
+                            <input type="number" class="form-control" name="blood_pressure_diastolic" required
+                                placeholder="80">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fas fa-lungs"></i> Respiratory Rate</label>
+                        <input type="number" class="form-control" name="respiratory_rate" required placeholder="16">
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fas fa-wind"></i> Oxygen Saturation (SpO2 %)</label>
+                        <input type="number" class="form-control" name="oxygen_saturation" required placeholder="98">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('telemetryModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="submitTelemetry()">
+                    <i class="fas fa-save"></i> Save Vitals
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script>
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (!user.id || user.role !== 'nurse') window.location.href = '../index.html';
+
+        document.getElementById('userName').textContent = `${user.first_name} ${user.last_name}`;
+        document.getElementById('userAvatar').textContent = user.first_name[0] + user.last_name[0];
+
+        // Tab navigation
+        document.querySelectorAll('.sidebar-nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = e.currentTarget;
+                const tab = target.dataset.tab;
+
+                if (!tab) return;
+
+                document.querySelectorAll('.sidebar-nav a').forEach(l => l.classList.remove('active'));
+                target.classList.add('active');
+
+                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                document.getElementById(tab + 'Tab').classList.add('active');
+
+                document.getElementById('pageTitle').textContent =
+                    target.textContent.trim();
+
+                if (tab === 'wards') loadWards();
+                if (tab === 'telemetry') loadAppointments();
+            });
+        });
+
+        async function loadWards() {
+            try {
+                const rooms = await api.getWardRooms();
+                document.getElementById('wardsTable').innerHTML = rooms.map(r => `
+                    <tr>
+                        <td><strong>${r.room_number}</strong></td>
+                        <td>${r.room_type}</td>
+                        <td>${r.capacity}</td>
+                        <td><span class="badge ${r.is_available ? 'badge-success' : 'badge-danger'}">${r.is_available ? 'Available' : 'Full'}</span></td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                console.error(e);
+                document.getElementById('wardsTable').innerHTML = `<tr><td colspan="4" class="alert alert-danger">${e.message}</td></tr>`;
+            }
+        }
+
+        async function loadAppointments() {
+            const tbody = document.getElementById('appointmentsTable');
+            tbody.innerHTML = '<tr><td colspan="5" class="loading"><div class="spinner"></div></td></tr>';
+
+            try {
+                const appointments = await api.getNurseAppointments();
+                if (!appointments || appointments.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No appointments found for today.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = appointments.map(apt => `
+                    <tr>
+                        <td><i class="far fa-clock"></i> ${apt.appointment_time}</td>
+                        <td><strong>${apt.patient_name}</strong></td>
+                        <td>Dr. ${apt.doctor_name}</td>
+                        <td><span class="badge badge-info">${apt.status}</span></td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" onclick="openTelemetryModal(${apt.patient_id}, ${apt.id})">
+                                <i class="fas fa-plus"></i> Record Vitals
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                console.error(e);
+                tbody.innerHTML = `<tr><td colspan="5" class="alert alert-danger">${e.message}</td></tr>`;
+            }
+        }
+
+        function openTelemetryModal(patientId, appointmentId) {
+            document.getElementById('tel_patient_id').value = patientId;
+            document.getElementById('tel_appointment_id').value = appointmentId;
+            document.getElementById('telemetryModal').classList.add('active');
+        }
+
+        async function submitTelemetry() {
+            const form = document.getElementById('telemetryForm');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            // Convert to numbers
+            const payload = {
+                patient_id: parseInt(data.patient_id),
+                appointment_id: parseInt(data.appointment_id),
+                heart_rate: parseInt(data.heart_rate),
+                temperature: parseFloat(data.temperature),
+                blood_pressure_systolic: parseInt(data.blood_pressure_systolic),
+                blood_pressure_diastolic: parseInt(data.blood_pressure_diastolic),
+                respiratory_rate: parseInt(data.respiratory_rate),
+                oxygen_saturation: parseInt(data.oxygen_saturation)
+            };
+
+            try {
+                await api.addTelemetry(payload);
+                closeModal('telemetryModal');
+                form.reset();
+                alert('Patient vitals recorded successfully!');
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function logout() { localStorage.clear(); window.location.href = '../index.html'; }
+
+        // Initial load
+        loadWards();
+    </script>
+</body>
+
+</html>

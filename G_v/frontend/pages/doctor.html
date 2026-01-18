@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Dashboard - IHORMS</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>IHORMS</h2>
+                <p>Doctor Portal</p>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="active" data-tab="schedule">
+                    <i class="fas fa-calendar-day"></i> My Schedule
+                </a>
+                <a href="#" data-tab="appointments">
+                    <i class="fas fa-list-check"></i> Appointments
+                </a>
+                <a href="#" data-tab="patients">
+                    <i class="fas fa-user-injured"></i> Patient Records
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="page-header">
+                <h1 id="pageTitle">My Schedule</h1>
+                <div class="user-info">
+                    <div class="avatar" id="userAvatar">DR</div>
+                    <span id="userName">Doctor</span>
+                    <button class="btn btn-logout" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </header>
+
+            <!-- Schedule Tab -->
+            <div id="scheduleTab" class="tab-content active">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-clock"></i> Today's Lineup</h3>
+                        <input type="date" id="scheduleDate" class="form-control" style="width: auto;"
+                            onchange="loadSchedule()">
+                    </div>
+                    <div class="schedule-grid" id="scheduleGrid">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appointments Tab -->
+            <div id="appointmentsTab" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-notes-medical"></i> All Appointments</h3>
+                        <button class="btn btn-outline btn-sm" onclick="loadAppointments()">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Patient</th>
+                                    <th>Complaint</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="appointmentsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Patient Search Tab -->
+            <div id="patientsTab" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-search"></i> Search Medical History</h3>
+                    </div>
+                    <div class="form-row" style="margin-bottom: 24px; max-width: 600px;">
+                        <input type="text" class="form-control" id="patientSearchInput"
+                            placeholder="Enter Patient UID (e.g., P-00001)">
+                        <button class="btn btn-primary" onclick="searchPatient()">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
+                    <div id="patientResult"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Notes Modal -->
+    <div class="modal-overlay" id="notesModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-pen-nib"></i> Clinical Documentation</h3>
+                <button class="modal-close" onclick="closeModal('notesModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="notesForm">
+                    <input type="hidden" id="notesAppointmentId">
+                    <div class="form-group">
+                        <label>Patient Chief Complaint</label>
+                        <textarea class="form-control" name="notes" rows="2"
+                            placeholder="Describe symptoms and observations..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Professional Diagnosis</label>
+                        <input type="text" class="form-control" name="diagnosis" placeholder="E.g., Type 2 Diabetes"
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label>Prescription & Dosage</label>
+                        <textarea class="form-control" name="prescription" rows="3"
+                            placeholder="Medicine, Frequency, Duration..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Final Verdict / Advice</label>
+                        <textarea class="form-control" name="verdict" rows="2"
+                            placeholder="Next steps or follow-up advice..." required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('notesModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="submitNotes()">
+                    <i class="fas fa-check-circle"></i> Complete Session
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script>
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (!user.id || user.role !== 'doctor') window.location.href = '../index.html';
+
+        document.getElementById('userName').textContent = `Dr. ${user.first_name} ${user.last_name}`;
+        document.getElementById('userAvatar').textContent = user.first_name[0] + user.last_name[0];
+        document.getElementById('scheduleDate').value = new Date().toISOString().split('T')[0];
+
+        // Tab navigation
+        document.querySelectorAll('.sidebar-nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = e.currentTarget;
+                const tab = target.dataset.tab;
+
+                document.querySelectorAll('.sidebar-nav a').forEach(l => l.classList.remove('active'));
+                target.classList.add('active');
+
+                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                document.getElementById(tab + 'Tab').classList.add('active');
+
+                document.getElementById('pageTitle').textContent = target.textContent.trim();
+
+                if (tab === 'schedule') loadSchedule();
+                if (tab === 'appointments') loadAppointments();
+            });
+        });
+
+        async function loadSchedule() {
+            const date = document.getElementById('scheduleDate').value;
+            const grid = document.getElementById('scheduleGrid');
+            grid.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+            try {
+                const appointments = await api.getDoctorSchedule(date);
+                if (!appointments || appointments.length === 0) {
+                    grid.innerHTML = '<div class="empty-state"><i class="fas fa-calendar-alt"></i><p>No appointments for this date.</p></div>';
+                    return;
+                }
+
+                grid.innerHTML = appointments.map(apt => `
+                    <div class="schedule-item ${apt.status}">
+                        <div class="schedule-time"><i class="far fa-clock"></i> ${apt.appointment_time}</div>
+                        <div class="schedule-details">
+                            <div class="schedule-patient"><strong>${apt.patient_name}</strong></div>
+                            <div class="schedule-complaint">${apt.chief_complaint || 'General Checkup'}</div>
+                        </div>
+                        <span class="badge badge-${getStatusBadge(apt.status)}">${apt.status}</span>
+                        <div style="display: flex; gap: 8px; margin-left: 16px;">
+                            ${apt.status === 'scheduled' ? `<button class="btn btn-success btn-sm" onclick="acceptAppointment(${apt.id})"><i class="fas fa-check"></i> Accept</button>` : ''}
+                            ${apt.status === 'accepted' ? `<button class="btn btn-primary btn-sm" onclick="openNotesModal(${apt.id})"><i class="fas fa-file-medical"></i> Notes</button>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                grid.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+            }
+        }
+
+        async function loadAppointments() {
+            const tbody = document.getElementById('appointmentsTableBody');
+            tbody.innerHTML = '<tr><td colspan="6" class="loading"><div class="spinner"></div></td></tr>';
+
+            try {
+                const appointments = await api.getDoctorAppointments();
+                if (!appointments || appointments.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No appointment history found.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = appointments.map(apt => `
+                    <tr>
+                        <td>${apt.appointment_date}</td>
+                        <td>${apt.appointment_time}</td>
+                        <td><strong>${apt.patient_name}</strong></td>
+                        <td>${apt.chief_complaint || '-'}</td>
+                        <td><span class="badge badge-${getStatusBadge(apt.status)}">${apt.status}</span></td>
+                        <td>
+                            ${apt.status === 'scheduled' ? `<button class="btn btn-success btn-sm" onclick="acceptAppointment(${apt.id})">Accept</button>` : ''}
+                            ${apt.status === 'accepted' ? `<button class="btn btn-primary btn-sm" onclick="openNotesModal(${apt.id})">Add Notes</button>` : ''}
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="6" class="alert alert-danger">${error.message}</td></tr>`;
+            }
+        }
+
+        function getStatusBadge(status) {
+            const badges = { 'scheduled': 'info', 'accepted': 'warning', 'completed': 'success', 'rejected': 'danger' };
+            return badges[status] || 'secondary';
+        }
+
+        async function acceptAppointment(id) {
+            try {
+                await api.acceptAppointment(id);
+                loadSchedule();
+                if (document.getElementById('appointmentsTab').classList.contains('active')) loadAppointments();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        function openNotesModal(appointmentId) {
+            document.getElementById('notesAppointmentId').value = appointmentId;
+            document.getElementById('notesModal').classList.add('active');
+        }
+
+        async function submitNotes() {
+            const appointmentId = document.getElementById('notesAppointmentId').value;
+            const form = document.getElementById('notesForm');
+            const data = Object.fromEntries(new FormData(form).entries());
+
+            try {
+                await api.addDoctorNotes(appointmentId, data);
+                closeModal('notesModal');
+                form.reset();
+                loadSchedule();
+                if (document.getElementById('appointmentsTab').classList.contains('active')) loadAppointments();
+                alert('Session completed and notes saved!');
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        async function searchPatient() {
+            const uid = document.getElementById('patientSearchInput').value;
+            const resultDiv = document.getElementById('patientResult');
+            if (!uid) return;
+
+            try {
+                const patient = await api.searchPatient(uid);
+                resultDiv.innerHTML = `
+                    <div class="card" style="border-left: 4px solid var(--primary);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h4 style="margin-bottom: 4px;">${patient.first_name} ${patient.last_name}</h4>
+                                <p class="text-muted"><i class="fas fa-id-card"></i> UID: ${patient.patient_uid}</p>
+                            </div>
+                            <button class="btn btn-primary" onclick="viewHistory(${patient.id})">
+                                <i class="fas fa-history"></i> View Full History
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+            }
+        }
+
+        async function viewHistory(patientId) {
+            try {
+                const history = await api.getPatientHistory(patientId);
+                // For now, simpler display, can be a modal later
+                alert("History Records: " + history.length + "\nLatest: " + (history[0]?.diagnosis || 'No diagnosis yet'));
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        function logout() { localStorage.clear(); window.location.href = '../index.html'; }
+
+        loadSchedule();
+    </script>
+</body>
+
+</html>

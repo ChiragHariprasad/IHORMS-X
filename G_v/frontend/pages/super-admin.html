@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin - IHORMS</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>IHORMS</h2>
+                <p>Super Admin Panel</p>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="active" data-tab="dashboard">
+                    <i class="fas fa-chart-pie"></i> Dashboard
+                </a>
+                <a href="#" data-tab="organizations">
+                    <i class="fas fa-hospital"></i> Organizations
+                </a>
+                <a href="#" data-tab="analytics">
+                    <i class="fas fa-chart-line"></i> Analytics
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="page-header">
+                <h1 id="pageTitle">Dashboard</h1>
+                <div class="user-info">
+                    <div class="avatar" id="userAvatar">SA</div>
+                    <span id="userName">Super Admin</span>
+                    <button class="btn btn-logout" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </header>
+
+            <!-- Dashboard Tab -->
+            <div id="dashboardTab" class="tab-content active">
+                <div class="stats-grid" id="statsGrid">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Organizations Tab -->
+            <div id="organizationsTab" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-list"></i> All Organizations</h3>
+                        <button class="btn btn-primary" onclick="showCreateOrgModal()">
+                            <i class="fas fa-plus"></i> Add Organization
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orgsTableBody">
+                                <tr>
+                                    <td colspan="4" class="loading">
+                                        <div class="spinner"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div id="analyticsTab" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-microchip"></i> Platform Analytics</h3>
+                    </div>
+                    <div id="analyticsContent">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create Organization Modal -->
+    <div class="modal-overlay" id="createOrgModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-building-circle-plus"></i> Create Organization</h3>
+                <button class="modal-close" onclick="closeModal('createOrgModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="createOrgForm">
+                    <div class="form-group">
+                        <label>Organization Name</label>
+                        <input type="text" class="form-control" name="name" required
+                            placeholder="E.g., Apollo Hospitals">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <input type="text" class="form-control" name="phone" placeholder="+1234567890">
+                        </div>
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" class="form-control" name="email" placeholder="contact@org.com">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Headquarters Address</label>
+                        <textarea class="form-control" name="address" rows="2" placeholder="Full address..."></textarea>
+                    </div>
+                    <hr style="margin: 24px 0; border: none; border-top: 1px dashed var(--border);">
+                    <h4 style="margin-bottom: 16px; color: var(--primary);">Organization Admin Account</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>First Name</label>
+                            <input type="text" class="form-control" name="admin_first_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name</label>
+                            <input type="text" class="form-control" name="admin_last_name" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Admin Email</label>
+                        <input type="email" class="form-control" name="admin_email" required
+                            placeholder="admin@org.com">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('createOrgModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createOrganization()">
+                    <i class="fas fa-check"></i> Register Organization
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script>
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (!user.id || user.role !== 'super_admin') window.location.href = '../index.html';
+
+        document.getElementById('userName').textContent = `${user.first_name} ${user.last_name}`;
+        document.getElementById('userAvatar').textContent = user.first_name[0] + user.last_name[0];
+
+        // Tab navigation
+        document.querySelectorAll('.sidebar-nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = e.currentTarget;
+                const tab = target.dataset.tab;
+
+                document.querySelectorAll('.sidebar-nav a').forEach(l => l.classList.remove('active'));
+                target.classList.add('active');
+
+                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                document.getElementById(tab + 'Tab').classList.add('active');
+
+                document.getElementById('pageTitle').textContent = target.textContent.trim();
+
+                if (tab === 'dashboard') loadDashboard();
+                if (tab === 'organizations') loadOrganizations();
+                if (tab === 'analytics') loadAnalytics();
+            });
+        });
+
+        async function loadDashboard() {
+            try {
+                const data = await api.getPlatformAnalytics();
+                document.getElementById('statsGrid').innerHTML = `
+                    <div class="stat-card">
+                        <div class="label"><i class="fas fa-hospital"></i> Total Organizations</div>
+                        <div class="value">${data.total_organizations}</div>
+                    </div>
+                    <div class="stat-card success">
+                        <div class="label"><i class="fas fa-check-circle"></i> Active Organizations</div>
+                        <div class="value">${data.active_organizations}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label"><i class="fas fa-code-branch"></i> Total Branches</div>
+                        <div class="value">${data.total_branches}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label"><i class="fas fa-users"></i> Total Users</div>
+                        <div class="value">${data.total_users}</div>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('statsGrid').innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+            }
+        }
+
+        async function loadOrganizations() {
+            try {
+                const orgs = await api.getOrganizations();
+                const tbody = document.getElementById('orgsTableBody');
+                tbody.innerHTML = orgs.map(org => `
+                    <tr>
+                        <td>${org.id}</td>
+                        <td><strong>${org.name}</strong></td>
+                        <td>
+                            <span class="badge ${org.is_active ? 'badge-success' : 'badge-danger'}">
+                                ${org.is_active ? 'Active' : 'Disabled'}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn ${org.is_active ? 'btn-danger' : 'btn-success'} btn-sm" onclick="toggleOrg(${org.id})">
+                                ${org.is_active ? 'Disable' : 'Enable'}
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                document.getElementById('orgsTableBody').innerHTML = `<tr><td colspan="4" class="alert alert-danger">${error.message}</td></tr>`;
+            }
+        }
+
+        async function loadAnalytics() {
+            try {
+                const data = await api.getPlatformAnalytics();
+                document.getElementById('analyticsContent').innerHTML = `
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="label"><i class="fas fa-chart-bar"></i> Total Organizations</div>
+                            <div class="value">${data.total_organizations}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label"><i class="fas fa-network-wired"></i> Total Branches</div>
+                            <div class="value">${data.total_branches}</div>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('analyticsContent').innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+            }
+        }
+
+        async function toggleOrg(orgId) {
+            try {
+                await api.disableOrganization(orgId);
+                loadOrganizations();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        function showCreateOrgModal() { document.getElementById('createOrgModal').classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        async function createOrganization() {
+            const form = document.getElementById('createOrgForm');
+            const data = Object.fromEntries(new FormData(form).entries());
+            try {
+                await api.createOrganization(data);
+                closeModal('createOrgModal');
+                form.reset();
+                loadOrganizations();
+                alert('Organization created successfully!');
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        function logout() { localStorage.clear(); window.location.href = '../index.html'; }
+        loadDashboard();
+    </script>
+</body>
+
+</html>

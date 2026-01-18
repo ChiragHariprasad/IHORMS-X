@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacy - IHORMS</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>IHORMS</h2>
+                <p>Pharmacy Portal</p>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="active" data-tab="inventory">
+                    <i class="fas fa-boxes-stacked"></i> Inventory
+                </a>
+                <a href="#" data-tab="orders">
+                    <i class="fas fa-receipt"></i> Pending Orders
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="page-header">
+                <h1 id="pageTitle">Inventory Management</h1>
+                <div class="user-info">
+                    <div class="avatar" id="userAvatar">PH</div>
+                    <span id="userName">Pharmacy Staff</span>
+                    <button class="btn btn-logout" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </header>
+
+            <!-- Inventory Tab -->
+            <div id="inventoryTab" class="tab-content active">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-pills"></i> Stock Levels</h3>
+                        <button class="btn btn-outline btn-sm" onclick="loadInventory()">
+                            <i class="fas fa-sync"></i> Refresh Stock
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Medicine Name</th>
+                                    <th>Quantity</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Tab -->
+            <div id="ordersTab" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-clipboard-list"></i> Prescriptions to Fulfill</h3>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Order #</th>
+                                    <th>Patient Name</th>
+                                    <th>Items Required</th>
+                                    <th>Total Bill</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script>
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (!user.id || user.role !== 'pharmacy_staff') window.location.href = '../index.html';
+
+        document.getElementById('userName').textContent = `${user.first_name} ${user.last_name}`;
+        document.getElementById('userAvatar').textContent = user.first_name[0] + user.last_name[0];
+
+        // Tab navigation
+        document.querySelectorAll('.sidebar-nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = e.currentTarget;
+                const tab = target.dataset.tab;
+
+                document.querySelectorAll('.sidebar-nav a').forEach(l => l.classList.remove('active'));
+                target.classList.add('active');
+
+                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                document.getElementById(tab + 'Tab').classList.add('active');
+
+                document.getElementById('pageTitle').textContent = target.textContent.trim();
+
+                if (tab === 'orders') loadOrders();
+                else loadInventory();
+            });
+        });
+
+        async function loadInventory() {
+            try {
+                const inventory = await api.getInventory();
+                document.getElementById('inventoryTable').innerHTML = inventory.map(item => `
+                    <tr>
+                        <td><strong>${item.medicine_name}</strong></td>
+                        <td>${item.quantity}</td>
+                        <td><span class="badge ${item.is_low_stock ? 'badge-warning' : 'badge-success'}">${item.is_low_stock ? 'Low Stock' : 'In Stock'}</span></td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" onclick="restock(${item.id})">
+                                <i class="fas fa-plus"></i> Restock
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                document.getElementById('inventoryTable').innerHTML = `<tr><td colspan="4" class="alert alert-danger">${error.message}</td></tr>`;
+            }
+        }
+
+        async function restock(id) {
+            const qty = prompt("Enter quantity to add to stock:");
+            if (qty) {
+                try {
+                    await api.restockItem(id, parseInt(qty));
+                    loadInventory();
+                } catch (error) {
+                    alert(error.message);
+                }
+            }
+        }
+
+        async function loadOrders() {
+            try {
+                const orders = await api.getPendingOrders();
+                if (!orders || orders.length === 0) {
+                    document.getElementById('ordersTable').innerHTML = '<tr><td colspan="5" class="empty-state">No pending orders found.</td></tr>';
+                    return;
+                }
+                document.getElementById('ordersTable').innerHTML = orders.map(order => `
+                    <tr>
+                        <td>${order.order_number}</td>
+                        <td><strong>${order.patient_name}</strong></td>
+                        <td>${Array.isArray(order.items) ? order.items.map(m => `${m.medicine_name} (x${m.quantity})`).join(', ') : '-'}</td>
+                        <td>₹${order.total_amount}</td>
+                        <td>
+                            <button class="btn btn-success btn-sm" onclick="fulfill(${order.id})">
+                                <i class="fas fa-check"></i> Fulfill
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                document.getElementById('ordersTable').innerHTML = `<tr><td colspan="5" class="alert alert-danger">${error.message}</td></tr>`;
+            }
+        }
+
+        async function fulfill(id) {
+            try {
+                await api.fulfillOrder(id);
+                loadOrders();
+                alert('Order fulfilled and inventory updated!');
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        function logout() { localStorage.clear(); window.location.href = '../index.html'; }
+        loadInventory();
+    </script>
+</body>
+
+</html>
