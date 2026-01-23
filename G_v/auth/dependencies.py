@@ -23,13 +23,20 @@ class TokenData:
         self.branch_id = branch_id
 
 
-async def get_current_user(
+def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db)
 ) -> User:
     """Validate JWT and return current user"""
     token = credentials.credentials
-    payload = jwt_handler.verify_token(token)
+    try:
+        payload = jwt_handler.verify_token(token)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
     
     if not payload:
         raise HTTPException(
@@ -57,7 +64,7 @@ async def get_current_user(
 
 def require_roles(allowed_roles: List[UserRole]):
     """Dependency factory for role-based access"""
-    async def role_checker(current_user: User = Depends(get_current_user)) -> User:
+    def role_checker(current_user: User = Depends(get_current_user)) -> User:
         if current_user.role not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -68,45 +75,45 @@ def require_roles(allowed_roles: List[UserRole]):
 
 
 # Role-specific dependencies
-async def get_super_admin(user: User = Depends(require_roles([UserRole.SUPER_ADMIN]))) -> User:
+def get_super_admin(user: User = Depends(require_roles([UserRole.SUPER_ADMIN]))) -> User:
     return user
 
 
-async def get_org_admin(user: User = Depends(require_roles([UserRole.ORG_ADMIN]))) -> User:
+def get_org_admin(user: User = Depends(require_roles([UserRole.ORG_ADMIN]))) -> User:
     return user
 
 
-async def get_branch_admin(user: User = Depends(require_roles([UserRole.BRANCH_ADMIN]))) -> User:
+def get_branch_admin(user: User = Depends(require_roles([UserRole.BRANCH_ADMIN]))) -> User:
     return user
 
 
-async def get_doctor(user: User = Depends(require_roles([UserRole.DOCTOR]))) -> User:
+def get_doctor(user: User = Depends(require_roles([UserRole.DOCTOR]))) -> User:
     return user
 
 
-async def get_nurse(user: User = Depends(require_roles([UserRole.NURSE]))) -> User:
+def get_nurse(user: User = Depends(require_roles([UserRole.NURSE]))) -> User:
     return user
 
 
-async def get_receptionist(user: User = Depends(require_roles([UserRole.RECEPTIONIST]))) -> User:
+def get_receptionist(user: User = Depends(require_roles([UserRole.RECEPTIONIST]))) -> User:
     return user
 
 
-async def get_pharmacy_staff(user: User = Depends(require_roles([UserRole.PHARMACY_STAFF]))) -> User:
+def get_pharmacy_staff(user: User = Depends(require_roles([UserRole.PHARMACY_STAFF]))) -> User:
     return user
 
 
-async def get_patient_user(user: User = Depends(require_roles([UserRole.PATIENT]))) -> User:
+def get_patient_user(user: User = Depends(require_roles([UserRole.PATIENT]))) -> User:
     return user
 
 
-async def get_clinical_staff(
+def get_clinical_staff(
     user: User = Depends(require_roles([UserRole.DOCTOR, UserRole.NURSE]))
 ) -> User:
     return user
 
 
-async def get_branch_staff(
+def get_branch_staff(
     user: User = Depends(require_roles([
         UserRole.DOCTOR, UserRole.NURSE, UserRole.RECEPTIONIST, 
         UserRole.PHARMACY_STAFF, UserRole.BRANCH_ADMIN

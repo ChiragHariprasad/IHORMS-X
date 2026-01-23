@@ -1,0 +1,1172 @@
+% IHORMS - Integrated Hospital Resource Management System
+% LaTeX Report Document
+% Academic Year 2025-2026
+
+\documentclass[12pt]{report}
+
+% ----- Packages -----
+\usepackage[
+    margin=1in,
+    headheight=14pt,
+    headsep=10pt
+]{geometry}
+
+\usepackage{fontspec}
+\setmainfont[
+    Path = ./,
+    UprightFont = TIMES.TTF,
+    BoldFont = TIMESBD.TTF,
+    ItalicFont = TIMESI.TTF,
+    BoldItalicFont = TIMESBI.TTF
+]{Times New Roman}
+
+\usepackage{graphicx}
+\usepackage{eso-pic}
+\usepackage{booktabs}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{shadows, shapes.geometric, arrows, positioning}
+\usepackage{float}
+\usepackage{array}
+\usepackage{draftwatermark}
+\usepackage{fancyhdr}
+\usepackage{natbib}
+\usepackage{amsmath}
+\usepackage{everypage}
+\usepackage{longtable}
+\usepackage{listings}
+
+% ----- Watermark -----
+\SetWatermarkText{\includegraphics[width=8cm]{logo_forwatermark.png}}
+\SetWatermarkAngle{0}
+\SetWatermarkScale{1}
+\SetWatermarkColor[gray]{0.95}
+
+% ----- Line Spacing -----
+\onehalfspacing
+
+\titleformat{\section}
+    {\normalfont\fontsize{14}{16}\bfseries}
+    {\thesection}
+    {1em}
+    {}
+
+\titleformat{\subsection}
+    {\normalfont\fontsize{12}{14}\bfseries}
+    {\thesubsection}
+    {1em}
+    {}
+
+% ----- Chapter Formatting -----
+\titleformat{\chapter}[display]
+    {\normalfont\LARGE\bfseries\centering}
+    {Chapter \thechapter}
+    {1ex}
+    {\MakeUppercase}
+
+\titlespacing*{\chapter}{0pt}{-5pt}{20pt}
+\titlespacing*{\section}{0pt}{20pt}{10pt}
+
+% ----- Header/Footer -----
+\pagestyle{fancy}
+\fancyhf{}
+
+\fancyhead[L]{\hspace*{-1.3cm}\fontsize{11}{13}\selectfont\itshape Integrated Hospital Resource Management System}
+\fancyhead[R]{\fontsize{11}{13}\selectfont 2025--26\hspace*{-1.25cm}}
+\fancyfoot[L]{\hspace*{-1.3cm}Department of AIML, RVCE}
+\fancyfoot[R]{\thepage\hspace*{-1.3cm}}
+
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+\setlength{\headheight}{14pt}
+
+\fancypagestyle{plain}{
+    \fancyhf{}
+    \fancyhead[L]{\hspace*{-1.3cm}\fontsize{11}{13}\selectfont\itshape Integrated Hospital Resource Management System}
+    \fancyhead[R]{\fontsize{11}{13}\selectfont 2025--26\hspace*{-1.25cm}}
+    \fancyfoot[L]{\hspace*{-1.3cm}Department of AIML, RVCE}
+    \fancyfoot[R]{\thepage\hspace*{-1.3cm}}
+    \renewcommand{\headrulewidth}{0pt}
+    \renewcommand{\footrulewidth}{0pt}
+    \setlength{\headheight}{14pt}
+}
+
+% Page border on every page
+\AddToShipoutPicture{%
+    \AtPageLowerLeft{%
+        \put(0.5in, 0.8in){\framebox(\dimexpr\paperwidth-1in, \dimexpr\paperheight-1.67in){}}%
+    }%
+}
+
+% ----- SQL Code Listing Style -----
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    frame=single,
+    language=SQL,
+    showstringspaces=false
+}
+
+\begin{document}
+
+\pagenumbering{roman}
+\setcounter{page}{1}
+\pagestyle{fancy}
+
+% ==================== TITLE PAGE ====================
+\SetWatermarkText{}
+\begin{titlepage}
+\centering
+\vspace*{0.25cm}
+
+{\fontsize{16}{18}\selectfont \textbf{RV COLLEGE OF ENGINEERING®}}\\[0.2cm]
+{\fontsize{16}{18}\selectfont \textbf{BENGALURU--560059}}\\[0.15cm]
+{\fontsize{12}{14}\selectfont (Autonomous Institution Affiliated to VTU, Belagavi)}\\[0.8cm]
+
+{\fontsize{14}{16}\selectfont \textbf{DEPARTMENT OF ARTIFICIAL INTELLIGENCE AND}}\\[0.05cm]
+{\fontsize{14}{16}\selectfont \textbf{MACHINE LEARNING}}\\[0.5cm]
+
+\includegraphics[width=9.5cm, trim=0cm 1.55cm 0cm 0cm, clip]{rvce_logo.png}\\[0.5cm]
+
+{\fontsize{16}{18}\selectfont \textbf{Integrated Hospital Resource Management System}}\\[0.05cm]
+{\fontsize{16}{18}\selectfont \textbf{(IHORMS)}}\\[0.05cm]
+{\fontsize{12}{14}\selectfont \textit{Mini Project Report}}\\[0.4cm]
+
+{\fontsize{12}{14}\selectfont \textit{Submitted by}}\\[0.35cm]
+
+{\fontsize{12}{14}\selectfont
+\begin{tabular}{lr}
+\textbf{CHIRAG H} & \textbf{1RV24AI402} \\[0.05cm]
+\textbf{KUSHAL S GOWDA} & \textbf{1RV23AI048} \\[0.05cm]
+\end{tabular}}\\[0.4cm]
+
+{\fontsize{11}{13}\selectfont \textit{in partial fulfilment for the requirement of 5\textsuperscript{th} Semester}}\\[0.2cm]
+{\fontsize{12}{14}\selectfont \textbf{DBMS Laboratory (CD252IA)}}\\[0.5cm]
+
+{\fontsize{12}{14}\selectfont \textbf{Under the Guidance of}}\\[0.35cm]
+
+{\fontsize{11}{13}\selectfont
+\begin{minipage}[t]{0.42\textwidth}
+\centering
+\textbf{Prof. Harshitha V}\\
+Assistant Professor\\
+Department of AIML\\
+RV College of Engineering\\
+Bengaluru--59
+\end{minipage}
+\hspace{0.5cm}
+\begin{minipage}[t]{0.42\textwidth}
+\centering
+\textbf{Dr. Vijayalakshmi M.N.}\\
+Associate Professor\\
+Department of AIML\\
+RV College of Engineering\\
+Bengaluru--59
+\end{minipage}}\\[0.6cm]
+
+{\fontsize{12}{14}\selectfont \textbf{Academic Year}}\\[0.15cm]
+{\fontsize{12}{14}\selectfont \textbf{2025--2026}}
+
+\end{titlepage}
+
+% Re-enable watermark
+\SetWatermarkText{\includegraphics[width=8cm]{logo_forwatermark.png}}
+
+% ==================== CERTIFICATE PAGE ====================
+\thispagestyle{empty}
+
+\begin{center}
+\includegraphics[width=0.75\textwidth]{rvce_logo.png}
+\end{center}
+
+\vspace{0.5cm}
+
+\begin{center}
+{\Large \textbf{CERTIFICATE}}
+\end{center}
+
+\vspace{0.75cm}
+
+Certified that the project work titled \textbf{Integrated Hospital Resource Management System (IHORMS)} is carried out by \textbf{CHIRAG H (1RV24AI402)} and \textbf{KUSHAL S GOWDA (1RV23AI048)}, who are bonafide students of RV College of Engineering, Bengaluru, in partial fulfillment of the curriculum requirement of 5\textsuperscript{th} Semester Database Management Systems Laboratory Mini Project during the academic year 2025-2026.
+
+It is certified that all corrections/suggestions indicated for the Internal Assessment have been incorporated in the report. The report has been approved as it satisfies the academic requirements in all respect laboratory mini-project work prescribed by the institution.
+
+\vspace{2cm}
+
+\begin{minipage}[t]{0.45\textwidth}
+\textbf{Signature of Faculty}\\
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.45\textwidth}
+\textbf{Signature of Head of the Department}
+\end{minipage}
+
+\vspace{1.5cm}
+
+\noindent
+\begin{center}
+\textbf{External Viva}
+\end{center}
+
+\vspace{0.5cm}
+
+\noindent
+\begin{tabular}{p{0.6\textwidth}p{0.3\textwidth}}
+\textbf{Name of Examiners} & \textbf{Signature with Date} \\
+1. & \\
+2. & \\
+\end{tabular}
+
+\newpage
+
+% ==================== TABLE OF CONTENTS ====================
+\cleardoublepage
+\setcounter{page}{1}
+\setlength{\cftbeforetoctitleskip}{0pt}
+\setlength{\cftaftertoctitleskip}{20pt}
+
+\tableofcontents
+\thispagestyle{fancy}
+
+% ==================== MAIN MATTER ====================
+\cleardoublepage
+\pagenumbering{arabic}
+\setcounter{page}{1}
+\pagestyle{fancy}
+
+% ==================== CHAPTER 1: INTRODUCTION ====================
+\chapter{INTRODUCTION}
+
+The healthcare industry faces unprecedented challenges in managing patient data, coordinating care across multiple departments, and ensuring seamless communication between medical professionals. Traditional hospital management systems operate in isolated silos, creating fragmentation in patient care, inefficient resource allocation, and compromised data security. Small and medium-sized hospital chains struggle particularly with multi-branch coordination, leading to duplicate patient records, inconsistent treatment protocols, and inability to leverage organizational insights.
+
+The Integrated Hospital Resource Management System (IHORMS) addresses these critical gaps through a unified, multi-tenant architecture designed specifically for hospital organizations operating across multiple physical locations. Unlike conventional single-location systems, IHORMS provides centralized oversight while maintaining branch-level operational autonomy, enabling seamless patient transfers, unified medical histories, and organization-wide analytics.
+
+IHORMS revolutionizes healthcare delivery through intelligent automation and role-based workflows. At its core lies a sophisticated machine learning engine that analyzes patient symptoms to recommend appropriate specialists, reducing misdiagnosis and improving triage efficiency. Real-time telemetry monitoring with automated critical alerts ensures immediate response to patient deterioration, while comprehensive billing integration with insurance workflows streamlines financial operations.
+
+The system implements a hierarchical role structure spanning from platform super administrators managing multiple hospital organizations, to organization administrators overseeing multi-branch networks, down to branch-level staff including doctors, nurses, receptionists, pharmacists, and patients themselves. Each role receives a customized interface with precisely scoped permissions, ensuring data privacy compliance while maximizing operational efficiency.
+
+\section{Objective}
+
+\subsection{Primary Objectives}
+
+\textbf{Multi-Tenant Hospital Management Platform}: To design and implement a multi-tenant hospital management platform supporting multiple organizations with isolated data boundaries, enabling Software-as-a-Service deployment while ensuring strict HIPAA compliance and patient data privacy.
+
+\textbf{Intelligent Doctor Recommendation System}: To develop an intelligent doctor recommendation system using machine learning algorithms that analyze patient symptoms and medical history to suggest appropriate specialists, reducing triage errors and improving treatment outcomes.
+
+\textbf{Comprehensive Clinical Workflow Management}: To create a comprehensive clinical workflow management system encompassing appointment scheduling, medical documentation, admission processes, discharge approvals, and prescription management with full audit trails for regulatory compliance.
+
+\textbf{Real-Time Patient Telemetry Monitoring}: To implement real-time patient telemetry monitoring with automated critical alert generation when vital signs exceed safe thresholds, enabling immediate medical intervention for deteriorating patients.
+
+\textbf{Advanced Billing and Insurance Integration}: To integrate advanced billing and insurance claim processing with itemized billing, discount management, payment tracking, and automated insurance submission workflows.
+
+\subsection{Secondary Objectives}
+
+\textbf{Centralized Organization-Level Analytics}: To establish centralized organization-level analytics providing hospital administrators with revenue trends, appointment volumes, staff utilization metrics, and predictive insights for strategic planning.
+
+\textbf{Comprehensive Pharmacy Inventory Management}: To implement comprehensive pharmacy inventory management with stock tracking, expiry monitoring, low-stock alerts, and predictive demand forecasting using time-series analysis.
+
+\textbf{Patient Self-Service Portals}: To develop patient self-service portals enabling appointment booking, medical history viewing, bill payment, and insurance claim submission without requiring staff intervention.
+
+\textbf{Robust Data Security and Access Control}: To ensure robust data security and access control through role-based authentication, session management, comprehensive audit logging, and patient access tracking for HIPAA compliance.
+
+\textbf{Scalable Database Architecture}: To create scalable database architecture supporting millions of medical records with optimized indexing, efficient query performance, and automated backup mechanisms.
+
+\section{Scope}
+
+IHORMS is designed as a production-ready, multi-tenant hospital management platform suitable for deployment across hospital chains ranging from 3-50 branch locations. The system encompasses the complete patient journey from initial registration through appointment scheduling, clinical documentation, admission management, pharmacy services, and final billing with insurance processing.
+
+The platform supports eight distinct user roles with hierarchical access controls: Super Admins managing the platform infrastructure, Organization Admins overseeing hospital chains, Branch Admins managing individual locations, Doctors providing clinical care, Nurses monitoring patient vitals, Receptionists handling front-desk operations, Pharmacy Staff managing inventory, and Patients accessing self-service features.
+
+While IHORMS provides comprehensive operational management and clinical documentation capabilities, it does not extend to specialized medical imaging analysis, laboratory information systems integration, or direct integration with medical devices beyond manual vital sign entry. The system is optimized for PostgreSQL deployment with FastAPI backend architecture, ensuring sub-second query performance even with millions of historical records.
+
+IHORMS adheres to healthcare data privacy standards including HIPAA requirements through encrypted data storage, comprehensive audit trails, role-based access controls, and patient access logging. The system is designed for deployment on standard cloud infrastructure or on-premises servers, with minimal hardware requirements making it accessible to resource-constrained healthcare facilities.
+
+% ==================== CHAPTER 2: SOFTWARE REQUIREMENTS ====================
+\chapter{SOFTWARE REQUIREMENT SPECIFICATION}
+
+This chapter details the technical prerequisites and functional specifications necessary for successful deployment and operation of IHORMS, encompassing hardware infrastructure, software dependencies, and comprehensive functional requirements across all user roles.
+
+\section{Software Requirements}
+
+\subsection{Operating System}
+
+IHORMS server supports deployment on Ubuntu Server 20.04 LTS or 22.04 LTS (recommended), CentOS 8 or Rocky Linux 8, Windows Server 2019/2022, or Docker containerized deployment on any host OS.
+
+\subsection{Backend Technologies}
+
+\textbf{Python 3.11+}: Core backend language with async/await support for high-performance API endpoints.
+
+\textbf{FastAPI 0.109+}: Modern, high-performance web framework with automatic OpenAPI documentation, dependency injection, and async request handling.
+
+\textbf{Uvicorn/Gunicorn}: ASGI server for production deployment with worker process management and load balancing.
+
+\textbf{Pydantic 2.x}: Data validation and serialization library ensuring type safety and automatic request/response validation.
+
+\subsection{Database Technologies}
+
+\textbf{PostgreSQL 14+}: Primary relational database providing ACID compliance, advanced indexing, full-text search, and robust transaction management for critical healthcare data.
+
+\textbf{SQLAlchemy 2.0+}: Python ORM providing database abstraction, query generation, connection pooling, and migration support through Alembic.
+
+\textbf{psycopg2}: PostgreSQL adapter for Python enabling efficient database connectivity and query execution.
+
+\subsection{Authentication and Security}
+
+\textbf{OAuth2 with Password Flow}: Industry-standard authentication protocol for secure credential exchange and token-based session management.
+
+\textbf{JWT (JSON Web Tokens)}: Stateless authentication tokens containing encrypted user identity, role, and organization claims.
+
+\textbf{Passlib with bcrypt}: Cryptographic password hashing using bcrypt algorithm with configurable work factor for future-proof security.
+
+\textbf{CORS Middleware}: Cross-Origin Resource Sharing configuration enabling secure API access from web frontends.
+
+\subsection{Frontend Technologies}
+
+\textbf{HTML5}: Semantic markup providing accessible, standards-compliant user interfaces.
+
+\textbf{CSS3}: Modern styling with Flexbox/Grid layouts, responsive design, and custom animations.
+
+\textbf{JavaScript (ES6+)}: Client-side interactivity, AJAX requests, dynamic DOM manipulation, and local session management.
+
+\textbf{Chart.js 4.x}: Interactive data visualization for billing analytics, appointment trends, and organizational metrics.
+
+\subsection{Machine Learning Libraries}
+
+\textbf{scikit-learn}: Machine learning framework for doctor recommendation system using text similarity algorithms and classification models.
+
+\textbf{Faker}: Synthetic data generation library for populating development/testing databases with realistic hospital records.
+
+\textbf{pandas}: Data manipulation library for processing medical history, generating reports, and preparing analytics datasets.
+
+\section{Hardware Requirements}
+
+\subsection{Server-Side Requirements}
+
+The IHORMS backend infrastructure is optimized for modern cloud or on-premises deployment:
+
+\textbf{Processor}: Intel Xeon or AMD EPYC series with minimum 4 cores, 2.4 GHz clock speed. 8-core configuration recommended for production deployments handling 100+ concurrent users.
+
+\textbf{Memory (RAM)}: Minimum 8 GB for development environments, 16-32 GB recommended for production deployments to support concurrent database connections, API requests, and in-memory caching.
+
+\textbf{Storage}: Minimum 50 GB SSD storage for application and database files. Production deployments require 500GB-2TB based on patient volume, with daily incremental backups.
+
+\textbf{Network}: Gigabit Ethernet for local deployment, minimum 100 Mbps internet bandwidth for cloud hosting to ensure responsive API performance across branch locations.
+
+\subsection{Client-Side Requirements}
+
+Client workstations accessing IHORMS web interfaces require:
+
+\textbf{Processor}: Any modern dual-core processor capable of running Chrome, Firefox, or Edge browsers.
+
+\textbf{Memory (RAM)}: Minimum 4 GB for smooth browser operation and responsive interface rendering.
+
+\textbf{Display}: 1366x768 minimum resolution, 1920x1080 recommended for optimal dashboard viewing.
+
+\textbf{Network}: Minimum 10 Mbps connection to backend server for real-time updates and responsive page loads.
+
+\section{Functional Requirements}
+
+\subsection{Multi-Tenant Architecture Requirements}
+
+\textbf{Organization Isolation}: Complete data segregation between hospital organizations ensuring Apollo patients cannot access Fortis records, implemented through database-level filtering on every query.
+
+\textbf{Branch Management}: Organization administrators can create, activate, deactivate, and manage multiple branch locations with independent staff assignments and resource allocation.
+
+\textbf{Standardized ID Generation}: Automated generation of globally unique identifiers following format ORG-BRANCH-ENTITY-SEQUENCE, e.g., APL-MUM-P00001 for first patient at Apollo Mumbai.
+
+\textbf{Cross-Branch Patient Transfer}: Patients can book appointments at any branch within their organization with complete medical history visibility.
+
+\subsection{Authentication and Role-Based Access Control}
+
+\textbf{Unified Login Portal}: Single sign-on interface where users authenticate with email and password, with backend automatically routing to role-appropriate dashboard.
+
+\textbf{JWT Token Security}: Upon successful authentication, server issues encrypted JWT containing user ID, role, organization ID, and branch ID, stored client-side for subsequent API requests.
+
+\textbf{Role-Based Routing}: Frontend enforces role-based page access—nurse attempting to access doctor portal receives automatic redirect. Backend API endpoints validate JWT role claims before processing requests.
+
+\textbf{Session Management}: Automatic session expiration after 8 hours or 30 minutes of inactivity, requiring re-authentication for security.
+
+\textbf{Password Security}: Passwords hashed using bcrypt with random salt, minimum 8 characters with complexity requirements, stored securely without plaintext exposure.
+
+\subsection{Doctor Portal Requirements}
+
+\textbf{Appointment Dashboard}: Daily schedule view showing confirmed appointments with patient demographics, chief complaints, and consultation room assignments.
+
+\textbf{Clinical Documentation}: Interface for recording detailed diagnosis, treatment plans, prescriptions, and clinical verdicts with structured data entry.
+
+\textbf{Patient Admission}: One-click admission workflow allowing doctors to admit patients to ICU, general ward, or emergency rooms directly from consultation interface.
+
+\textbf{Discharge Approval}: Review pending discharge requests from nurses, approve/reject with mandatory discharge summary entry, triggering billing finalization.
+
+\textbf{Medical History Access}: Complete patient timeline showing all previous visits, diagnoses, prescriptions, and telemetry readings across all branches.
+
+\textbf{Patient Search}: Advanced search by patient UID, name, phone, or appointment date with access logging for HIPAA compliance.
+
+\subsection{Nurse Portal Requirements}
+
+\textbf{Ward Management}: Real-time view of all admitted patients showing room assignments, admission dates, and responsible doctors.
+
+\textbf{Telemetry Recording}: Structured forms for entering patient vitals including heart rate, blood pressure, temperature, oxygen saturation, and respiratory rate.
+
+\textbf{Critical Alert System}: Automated threshold monitoring triggering immediate visual alerts when vitals exceed safe ranges.
+
+\textbf{Discharge Request Workflow}: Interface for submitting discharge requests to attending physicians with supporting notes, tracked status, and approval history.
+
+\textbf{Patient Monitoring Dashboard}: Timeline view of telemetry readings with graphical trends enabling pattern recognition.
+
+\subsection{Receptionist Portal Requirements}
+
+\textbf{Patient Registration}: Comprehensive form capturing demographics, contact information, emergency contacts, blood group, insurance details with policy numbers and expiry dates.
+
+\textbf{Appointment Scheduling}: Calendar interface for booking appointments with doctor specialty filtering, availability checking, and automatic room assignment.
+
+\textbf{Smart Doctor Recommendation}: ML-powered suggestion system analyzing patient's chief complaint to recommend appropriate specialists with availability status.
+
+\textbf{Appointment Management}: View, reschedule, cancel appointments with automated notification generation.
+
+\textbf{Billing Interface}: Create itemized bills with multiple line items, discount percentages, tax calculations, and support for multiple payment methods.
+
+\textbf{Patient Search}: Quick lookup by name, phone, or patient UID for returning patients.
+
+\subsection{Pharmacist Portal Requirements}
+
+\textbf{Inventory Dashboard}: Real-time stock levels for all medicines with batch tracking, expiry dates, and reorder thresholds.
+
+\textbf{Stock Management}: Update inventory quantities, record new stock receipts with batch numbers and manufacturer details.
+
+\textbf{Expiry Monitoring}: Automated alerts for medicines nearing expiry, enabling proactive stock rotation.
+
+\textbf{Low Stock Alerts}: Visual indicators and notifications when medicine quantities fall below configurable reorder levels.
+
+\textbf{Time-Series Forecasting}: Predictive analytics using historical consumption data to forecast future demand, optimizing procurement decisions.
+
+\textbf{Prescription Fulfillment}: Interface for processing pharmacy orders linked to appointments with automatic inventory deduction.
+
+\subsection{Patient Portal Requirements}
+
+\textbf{Self-Service Appointment Booking}: Patients can book appointments by entering symptoms, receiving AI-powered doctor recommendations, and selecting available time slots.
+
+\textbf{Medical History Viewer}: Comprehensive timeline of all consultations with diagnosis, prescriptions, and vital readings from any branch within the organization.
+
+\textbf{Bill Management}: View all bills with detailed breakdowns, support for online payment, and insurance claim submission.
+
+\textbf{Insurance Claim Tracking}: Submit insurance claims directly through portal with policy details, track claim status.
+
+\textbf{Profile Management}: Update contact information, emergency contacts, and insurance policy details.
+
+\subsection{Organization Admin Requirements}
+
+\textbf{Branch Management}: Create new branches, assign branch administrators, view branch-level operational metrics.
+
+\textbf{Staff Directory}: Comprehensive view of all staff across all branches with role filtering, activity status, and assignment details.
+
+\textbf{Billing Analytics Dashboard}: Interactive visualizations showing monthly revenue trends, total bills generated, average bill amounts, and outstanding payments.
+
+\textbf{Revenue Insights}: Dual-axis charts displaying revenue vs. bill count trends over configurable time periods.
+
+\textbf{KPI Monitoring}: Real-time calculation of key performance indicators including total revenue, bill count, average transaction value, and outstanding receivables.
+
+\subsection{Branch Admin Requirements}
+
+\textbf{Staff Onboarding}: Create user accounts for doctors, nurses, receptionists, and pharmacy staff with role assignment and credential generation.
+
+\textbf{Resource Management}: Configure consultation rooms, ward beds, ICU capacity, and equipment inventory for the branch.
+
+\textbf{Operational Reports}: Branch-level analytics showing daily appointments, patient admissions, and staff utilization.
+
+\textbf{Staff Activity Monitoring}: Track login history, patient access logs, and action audit trails for compliance.
+
+% ==================== CHAPTER 3: ER DIAGRAM ====================
+\chapter{ER DIAGRAM}
+
+This chapter presents the comprehensive Entity-Relationship model representing the IHORMS database structure, encompassing all entities, their attributes, relationships, and cardinalities required to support multi-tenant hospital operations.
+
+The IHORMS ER diagram models a sophisticated multi-tenant hospital management system supporting multiple organizations, each with multiple branches, diverse user roles, clinical workflows, and financial operations. The diagram employs standard ER notation with entities represented as rectangles, relationships as diamonds, and attributes as ovals, with cardinality constraints clearly marked.
+
+At the architectural foundation lies the \textbf{Organization} entity, representing hospital chains like Apollo or Fortis. Organizations contain attributes including name, contact details, operational status, and timestamps. Each organization owns multiple branches and maintains complete data isolation from other organizations.
+
+The \textbf{Branch} entity represents physical hospital locations within an organization, storing location-specific details including address, city, state, pincode, and contact information. The one-to-many relationship between Organization and Branch enables a single hospital chain to manage numerous locations while maintaining centralized oversight.
+
+The \textbf{User} entity implements a polymorphic design supporting eight distinct roles through a single table. Core attributes include role enumeration (super\_admin, org\_admin, branch\_admin, doctor, nurse, receptionist, pharmacist, patient), email, password hash, personal information, and organizational relationships.
+
+Role-specific entities extend the base User model. The \textbf{Doctor} entity adds specialization, qualification, experience years, license number, and consultation fee. The \textbf{Nurse} entity contains qualification and license number. The \textbf{Patient} entity stores patient-specific data including unique patient UID, blood group, emergency contacts, and insurance details.
+
+The \textbf{Room} entity tracks physical spaces within branches, categorized by type (consultation, ICU, general ward, emergency, operation theater) with attributes for room number, floor, capacity, and availability status.
+
+\textbf{Equipment} manages medical devices and instruments with serial numbers, equipment type, purchase dates, maintenance schedules, and operational status.
+
+The \textbf{Appointment} entity serves as the central clinical workflow hub, linking patients and doctors with scheduled date and time, room assignment, appointment status, chief complaint, clinical notes, diagnosis, prescription, and verdict.
+
+\textbf{Admission} manages inpatient care, recording admission date, discharge workflow with request and approval stages, discharge summaries, and linking to the originating appointment.
+
+\textbf{MedicalHistory} provides longitudinal patient records with visit dates, diagnoses, symptoms, severity levels, treatments, medications, follow-up requirements, doctor notes, and lab results.
+
+\textbf{TelemetryData} captures patient vital signs including heart rate, blood pressure, temperature, oxygen saturation, respiratory rate, ICU status, and automated alert flags with messages.
+
+The \textbf{Billing} entity handles financial transactions with unique bill numbers, itemized charges, subtotal, tax, discount, total amount, payment tracking, and payment method.
+
+\textbf{InsuranceClaim} processes insurance workflows with claim numbers, insurance provider, policy details, claimed amounts, approved amounts, and status tracking.
+
+\textbf{Inventory} manages pharmacy stock with medicine names, generic equivalents, manufacturer details, batch numbers, quantities, pricing, expiry dates, and reorder thresholds.
+
+\textbf{PharmacyOrder} tracks medicine dispensing with order numbers, patient references, itemized lists, total amounts, and fulfillment status.
+
+Audit entities including \textbf{PatientAccessLog}, \textbf{AuditLog}, and \textbf{SystemEvent} provide comprehensive compliance tracking.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{ERDiagram.jpg}
+\caption{IHORMS Entity-Relationship Diagram depicting all entities, attributes, and relationships in the multi-tenant hospital management system}
+\label{fig:er_diagram}
+\end{figure}
+
+\section{Key Relationships and Cardinalities}
+
+The ER diagram establishes the following critical relationships:
+
+\textbf{Organization to Branch (1:N)}: Each organization owns multiple branches, with Branch.organization\_id as foreign key. This one-to-many relationship enables hospital chains to expand across multiple locations while maintaining centralized governance.
+
+\textbf{Branch to User (1:N)}: Each branch employs multiple staff members, with User.branch\_id as foreign key.
+
+\textbf{Organization to User (1:N)}: Each organization has multiple users across all roles, with User.organization\_id as foreign key. This relationship establishes the tenant boundary, ensuring data isolation between competing hospital organizations.
+
+\textbf{Doctor to Appointment (1:N)}: Each doctor manages multiple appointments over time, with Appointment.doctor\_id as foreign key.
+
+\textbf{Patient to Appointment (1:N)}: Each patient can have multiple appointments throughout their lifetime, with Appointment.patient\_id as foreign key.
+
+\textbf{Appointment to Admission (1:1)}: An appointment may result in exactly one admission, with Admission.appointment\_id as unique foreign key.
+
+\textbf{Appointment to Billing (1:1)}: Each appointment generates exactly one bill, with Billing.appointment\_id as unique foreign key.
+
+\textbf{Billing to InsuranceClaim (1:N)}: A bill may have multiple insurance claims processed sequentially, with InsuranceClaim.bill\_id as foreign key.
+
+\textbf{Patient to MedicalHistory (1:N)}: Each patient accumulates multiple medical history records, with MedicalHistory.patient\_id as foreign key.
+
+\textbf{Admission to TelemetryData (1:N)}: Each admission generates multiple telemetry readings, with TelemetryData.admission\_id as foreign key.
+
+\textbf{Branch to Room (1:N)}: Each branch contains multiple rooms, with Room.branch\_id as foreign key.
+
+\textbf{Branch to Inventory (1:N)}: Each branch maintains independent pharmacy inventory, with Inventory.branch\_id as foreign key.
+
+These relationships collectively form a robust data model supporting complex multi-tenant hospital operations while maintaining data integrity through foreign key constraints and cardinality enforcement.
+
+\section{Normalization Strategy}
+
+The ER diagram is designed to achieve Third Normal Form (3NF), eliminating data redundancy and ensuring update anomalies cannot occur:
+
+\textbf{No Redundancy}: Patient names are stored only in the Users and Patients tables, not duplicated across Appointments or Bills. Doctor specializations reside solely in the Doctor entity, referenced through foreign keys rather than repeated.
+
+\textbf{Atomic Data}: Attributes are decomposed into smallest meaningful units. Addresses are broken into separate fields enabling granular filtering and analytics. Blood pressure is split into systolic and diastolic readings for precise medical analysis.
+
+\textbf{Full Functional Dependency}: Every non-key attribute depends entirely on the primary key. Doctor specialization depends on doctor\_id, not on appointment\_id. Room availability depends on room\_id, not on the appointments scheduled within it.
+
+\textbf{No Transitive Dependencies}: Non-key attributes do not depend on other non-key attributes. Organization address is stored in the Organization table, not duplicated in Branch records which only reference organization\_id. Patient insurance details reside in the Patient entity, not propagated to every Billing record.
+
+This normalization strategy ensures data consistency, simplifies updates, and eliminates insertion, deletion, and update anomalies.
+
+% ==================== CHAPTER 4: DETAILED DESIGN ====================
+\chapter{DETAILED DESIGN}
+
+This chapter presents the hierarchical decomposition of IHORMS functionality through Data Flow Diagrams (DFDs) at three levels of abstraction. DFDs provide a visual representation of information movement through the system, illustrating how data is processed, transformed, and stored across various functional modules.
+
+\section{DFD Level 0: Context Diagram}
+
+The Context Diagram establishes the system boundary, presenting IHORMS as a single unified process interacting with six primary external entities. This highest level of abstraction illustrates the system's position within the broader healthcare ecosystem.
+
+The diagram depicts the following external entities and their interactions:
+
+\textbf{Admin}: Provides staff data, branch configurations, and resource allocation directives. Receives system reports including billing analytics, staff directories, appointment volumes, and operational metrics.
+
+\textbf{Patient}: Submits personal details during registration, appointment requests with symptom descriptions, insurance policy information, and payment details. Receives booking confirmations, medical history reports, itemized bills, and insurance claim status updates.
+
+\textbf{Doctor}: Inputs clinical data including diagnoses, treatment plans, prescriptions, and patient admission/discharge decisions. Receives comprehensive patient medical histories, real-time critical alerts, appointment schedules, and pending discharge approval requests.
+
+\textbf{Nurse}: Records patient vital signs including heart rate, blood pressure, temperature, oxygen saturation, and respiratory rate. Submits discharge requests. Receives critical alerts when patient vitals exceed safe thresholds, ward assignments, and discharge approval notifications.
+
+\textbf{Pharmacist}: Updates medicine stock levels, records new inventory receipts with batch numbers and expiry dates. Receives prescription orders, low-stock alerts, and expiry warnings.
+
+\textbf{Receptionist}: Enters patient registration data, schedules appointments, creates itemized bills, and processes payments. Receives AI-powered doctor recommendations, appointment availability status, and billing reports.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{DFD0.png}
+\caption{IHORMS Context Diagram showing external entities and system boundary}
+\label{fig:dfd0}
+\end{figure}
+
+\section{DFD Level 1: Major System Processes}
+
+The Level 1 diagram decomposes the IHORMS monolith into six core functional processes, revealing the major subsystems and their data exchange patterns.
+
+\textbf{Process 1.0 - User Authentication and Authorization}: Validates user credentials against the User database, generates JWT tokens containing encrypted user identity and role claims, and routes users to role-appropriate dashboards.
+
+\textbf{Process 2.0 - Clinical Workflow Management}: Orchestrates the complete patient care lifecycle from appointment scheduling through discharge. Sub-processes include ML-based doctor recommendation, appointment creation with room allocation, medical documentation, patient admission, and discharge approval workflows.
+
+\textbf{Process 3.0 - Patient Monitoring and Telemetry}: Processes vital signs data entered by nurses, performs real-time threshold analysis to detect critical conditions, and generates automated alerts when patients deteriorate.
+
+\textbf{Process 4.0 - Billing and Insurance Management}: Creates itemized bills aggregating charges from consultations, medications, room usage, and tests. Applies discounts and taxes, tracks payments, and manages insurance claim submission and status tracking.
+
+\textbf{Process 5.0 - Pharmacy Inventory Management}: Tracks medicine stock levels, generates reorder alerts, monitors expiry dates, and processes prescription fulfillment orders.
+
+\textbf{Process 6.0 - Analytics and Reporting}: Aggregates operational data across all branches, generates revenue trend visualizations, calculates appointment volumes and staff utilization metrics, and produces predictive insights.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{DFD1.jpg}
+\caption{IHORMS Level 1 DFD decomposing the system into six core functional processes}
+\label{fig:dfd1}
+\end{figure}
+
+\section{DFD Level 2: Detailed Sub-Process Workflows}
+
+\subsection{DFD 2.1 - Staff Management Sub-Process}
+
+This diagram details the administrative workflows for managing hospital staff across all roles:
+
+\textbf{Process 2.1.1 - Staff Registration}: Branch administrators input staff details. The system validates email uniqueness, generates password hashes using bcrypt, assigns organization and branch IDs, and writes complete user records.
+
+\textbf{Process 2.1.2 - Role Assignment}: After user creation, the system links users to role-specific tables. Doctors receive records with specialization, consultation fees, and license numbers.
+
+\textbf{Process 2.1.3 - Credential Verification}: For medical professionals, the system performs verification of license numbers against external medical boards.
+
+\textbf{Process 2.1.4 - Staff Deactivation}: Administrators mark users as inactive rather than deleting records, preserving audit trails and maintaining referential integrity.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{DFD2.1.jpg}
+\caption{Detailed sub-processes for staff registration, role assignment, and credential verification}
+\label{fig:dfd21}
+\end{figure}
+
+\subsection{DFD 2.2 - Clinical Flow Sub-Process}
+
+This diagram illustrates the sequence of clinical activities from doctor perspective:
+
+\textbf{Process 2.2.1 - Patient History Retrieval}: When a doctor begins a consultation, the system queries medical history filtered by patient ID, ordering by visit date descending.
+
+\textbf{Process 2.2.2 - Vital Signs Recording}: During consultation, nurses input current vital signs through structured forms. The system validates ranges and writes to TelemetryData table.
+
+\textbf{Process 2.2.3 - Diagnosis Documentation}: After examination, doctors enter diagnosis codes, clinical notes, and treatment plans. The system stores this in both Appointment and MedicalHistory tables.
+
+\textbf{Process 2.2.4 - Prescription Generation}: Doctors specify medications, dosages, and frequencies. The system checks for drug interactions, allergies, and stock availability.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{DFD2.2.jpg}
+\caption{Clinical workflow from patient history retrieval through prescription generation}
+\label{fig:dfd22}
+\end{figure}
+
+\subsection{DFD 2.3 - Appointment Logic Sub-Process}
+
+This diagram details the appointment scheduling algorithm preventing double-booking:
+
+\textbf{Process 2.3.1 - Doctor Availability Check}: The system queries all appointments for selected doctor and date, calculating occupied time slots.
+
+\textbf{Process 2.3.2 - Room Allocation}: For available time slots, the system queries Room table and assigns using round-robin algorithm.
+
+\textbf{Process 2.3.3 - Appointment Creation}: Upon confirming available doctor and room, the system generates unique appointment record.
+
+\textbf{Process 2.3.4 - Conflict Resolution}: If double-booking is attempted, PostgreSQL's serializable isolation ensures one transaction succeeds.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{DFD2.3.jpg}
+\caption{Appointment scheduling algorithm with availability checking and room allocation}
+\label{fig:dfd23}
+\end{figure}
+
+\subsection{DFD 2.4 - Billing and Pharmacy Integration}
+
+This diagram shows the financial workflow connecting clinical services to billing:
+
+\textbf{Process 2.4.1 - Charge Aggregation}: When receptionist initiates billing, the system retrieves consultation fees, room charges, and pharmacy orders.
+
+\textbf{Process 2.4.2 - Tax and Discount Calculation}: The system applies configurable tax rate and discount percentage.
+
+\textbf{Process 2.4.3 - Payment Processing}: Receptionist selects payment method. For insurance payments, an InsuranceClaim record is created.
+
+\textbf{Process 2.4.4 - Invoice Generation}: The system generates unique bill number and stores complete billing record.
+
+\textbf{Process 2.4.5 - Inventory Deduction}: When PharmacyOrder is fulfilled, the system atomically decrements inventory quantities.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{DFD2.4.jpg}
+\caption{Financial workflows linking clinical services to billing and inventory management}
+\label{fig:dfd24}
+\end{figure}
+
+% ==================== CHAPTER 5: RELATIONAL SCHEMA ====================
+\chapter{RELATIONAL SCHEMA AND NORMALIZATION}
+
+This chapter presents the complete relational database schema implemented in PostgreSQL, detailing table structures, data types, constraints, indexes, and normalization achievements.
+
+\section{Normalization Analysis}
+
+IHORMS implements Third Normal Form (3NF) across all tables, systematically eliminating redundancy and update anomalies through careful dependency analysis.
+
+\subsection{First Normal Form (1NF) - Atomicity}
+
+Every table column contains atomic, indivisible values with no repeating groups or arrays:
+
+\textbf{Users Table}: Each user record stores exactly one role rather than role arrays. Email addresses are single values, not comma-separated lists.
+
+\textbf{Appointments Table}: Each appointment represents a single patient-doctor encounter. Multiple vital sign readings are externalized to the TelemetryData table.
+
+\textbf{Billing Table}: Itemized charges are stored as separate numeric columns rather than embedded JSON arrays.
+
+\textbf{Inventory Table}: Each medicine batch is a separate row with unique batch number and expiry date.
+
+\subsection{Second Normal Form (2NF) - Partial Dependency Elimination}
+
+All non-key attributes fully functionally depend on complete primary keys:
+
+\textbf{Medical License Storage}: Doctor license numbers are stored in the Doctor table where doctor\_id is the primary key, with Appointments referencing doctors through foreign key.
+
+\textbf{Room Details}: Room attributes depend on room\_id alone, not on which appointments are scheduled there.
+
+\textbf{Patient Insurance}: Insurance details depend on patient\_id, not on individual billing records.
+
+\textbf{Branch Location Data}: Branch addresses depend on branch\_id, not on which staff members work there.
+
+\subsection{Third Normal Form (3NF) - Transitive Dependency Elimination}
+
+No non-key attributes depend on other non-key attributes:
+
+\textbf{Organization Address Isolation}: Branch table contains only organization\_id reference. Organization addresses reside in the Organization table.
+
+\textbf{Doctor Specialization Independence}: Qualifications and practice specializations are treated as independent attributes.
+
+\textbf{Billing Payment Status}: Payment status is stored explicitly rather than computed from comparing amounts.
+
+\section{Complete Table Schemas}
+
+\subsection{Core Multi-Tenant Tables}
+
+\textbf{organizations}
+\begin{lstlisting}[language=SQL]
+CREATE TABLE organizations (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    address TEXT,
+    city VARCHAR(50),
+    state VARCHAR(50),
+    country VARCHAR(50) DEFAULT 'India',
+    pincode VARCHAR(10),
+    phone VARCHAR(15),
+    email VARCHAR(100) UNIQUE,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+\end{lstlisting}
+
+\textbf{branches}
+\begin{lstlisting}[language=SQL]
+CREATE TABLE branches (
+    id SERIAL PRIMARY KEY,
+    organization_id INTEGER NOT NULL 
+        REFERENCES organizations(id),
+    name VARCHAR(100) NOT NULL,
+    address TEXT NOT NULL,
+    city VARCHAR(50) NOT NULL,
+    state VARCHAR(50) NOT NULL,
+    pincode VARCHAR(10) NOT NULL,
+    phone VARCHAR(15),
+    email VARCHAR(100),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(organization_id, name)
+);
+\end{lstlisting}
+
+\subsection{User and Role Tables}
+
+\textbf{users}
+\begin{lstlisting}[language=SQL]
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    organization_id INTEGER NOT NULL 
+        REFERENCES organizations(id),
+    branch_id INTEGER REFERENCES branches(id),
+    role VARCHAR(20) NOT NULL CHECK (role IN 
+        ('super_admin', 'org_admin', 'branch_admin',
+         'doctor', 'nurse', 'receptionist', 
+         'pharmacist', 'patient')),
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    phone VARCHAR(15),
+    date_of_birth DATE,
+    gender VARCHAR(10) CHECK (gender IN 
+        ('male', 'female', 'other')),
+    is_active BOOLEAN DEFAULT TRUE,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    last_login TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+\end{lstlisting}
+
+\textbf{doctors}
+\begin{lstlisting}[language=SQL]
+CREATE TABLE doctors (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL UNIQUE 
+        REFERENCES users(id),
+    specialization VARCHAR(100) NOT NULL,
+    qualification VARCHAR(200),
+    experience_years INTEGER CHECK 
+        (experience_years >= 0),
+    license_number VARCHAR(50) UNIQUE,
+    consultation_fee DECIMAL(10,2) CHECK 
+        (consultation_fee > 0),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+\end{lstlisting}
+
+\textbf{patients}
+\begin{lstlisting}[language=SQL]
+CREATE TABLE patients (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL UNIQUE 
+        REFERENCES users(id),
+    organization_id INTEGER NOT NULL 
+        REFERENCES organizations(id),
+    branch_id INTEGER REFERENCES branches(id),
+    patient_uid VARCHAR(50) NOT NULL UNIQUE,
+    blood_group VARCHAR(5) CHECK (blood_group IN 
+        ('A+', 'A-', 'B+', 'B-', 
+         'O+', 'O-', 'AB+', 'AB-')),
+    emergency_contact VARCHAR(15),
+    emergency_contact_name VARCHAR(100),
+    address TEXT,
+    insurance_provider VARCHAR(100),
+    insurance_policy_number VARCHAR(50),
+    insurance_expiry DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+\end{lstlisting}
+
+\subsection{Clinical Workflow Tables}
+
+\textbf{appointments}
+\begin{lstlisting}[language=SQL]
+CREATE TABLE appointments (
+    id SERIAL PRIMARY KEY,
+    patient_id INTEGER NOT NULL 
+        REFERENCES patients(id),
+    doctor_id INTEGER NOT NULL 
+        REFERENCES doctors(id),
+    room_id INTEGER REFERENCES rooms(id),
+    appointment_date DATE NOT NULL,
+    appointment_time TIME NOT NULL,
+    status VARCHAR(20) DEFAULT 'scheduled' 
+        CHECK (status IN ('scheduled', 'accepted', 
+        'rejected', 'completed', 'cancelled', 
+        'admitted')),
+    chief_complaint TEXT,
+    notes TEXT,
+    diagnosis TEXT,
+    prescription TEXT,
+    verdict TEXT,
+    created_by INTEGER REFERENCES users(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+\end{lstlisting}
+
+\textbf{telemetry\_data}
+\begin{lstlisting}[language=SQL]
+CREATE TABLE telemetry_data (
+    id SERIAL PRIMARY KEY,
+    patient_id INTEGER NOT NULL 
+        REFERENCES patients(id),
+    admission_id INTEGER REFERENCES admissions(id),
+    recorded_by INTEGER NOT NULL 
+        REFERENCES users(id),
+    heart_rate INTEGER CHECK 
+        (heart_rate BETWEEN 40 AND 200),
+    blood_pressure_systolic INTEGER CHECK 
+        (blood_pressure_systolic BETWEEN 60 AND 250),
+    blood_pressure_diastolic INTEGER CHECK 
+        (blood_pressure_diastolic BETWEEN 40 AND 150),
+    temperature DECIMAL(4,1) CHECK 
+        (temperature BETWEEN 95.0 AND 107.0),
+    oxygen_saturation INTEGER CHECK 
+        (oxygen_saturation BETWEEN 0 AND 100),
+    respiratory_rate INTEGER CHECK 
+        (respiratory_rate BETWEEN 8 AND 60),
+    is_icu BOOLEAN DEFAULT FALSE,
+    critical_alert BOOLEAN DEFAULT FALSE,
+    alert_message TEXT,
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+\end{lstlisting}
+
+\subsection{Financial Tables}
+
+\textbf{billing}
+\begin{lstlisting}[language=SQL]
+CREATE TABLE billing (
+    id SERIAL PRIMARY KEY,
+    appointment_id INTEGER REFERENCES appointments(id),
+    patient_id INTEGER NOT NULL 
+        REFERENCES patients(id),
+    bill_number VARCHAR(50) NOT NULL UNIQUE,
+    bill_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    consultation_fee DECIMAL(10,2) DEFAULT 0,
+    medication_cost DECIMAL(10,2) DEFAULT 0,
+    room_charges DECIMAL(10,2) DEFAULT 0,
+    test_charges DECIMAL(10,2) DEFAULT 0,
+    other_charges DECIMAL(10,2) DEFAULT 0,
+    subtotal DECIMAL(10,2) NOT NULL,
+    tax DECIMAL(10,2) DEFAULT 0,
+    discount DECIMAL(10,2) DEFAULT 0,
+    total_amount DECIMAL(10,2) NOT NULL,
+    amount_paid DECIMAL(10,2) DEFAULT 0,
+    payment_status VARCHAR(20) DEFAULT 'pending' 
+        CHECK (payment_status IN 
+        ('pending', 'paid', 'partial')),
+    payment_method VARCHAR(20) CHECK 
+        (payment_method IN ('cash', 'card', 
+        'upi', 'insurance', 'online')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+\end{lstlisting}
+
+\subsection{Pharmacy Tables}
+
+\textbf{inventory}
+\begin{lstlisting}[language=SQL]
+CREATE TABLE inventory (
+    id SERIAL PRIMARY KEY,
+    branch_id INTEGER NOT NULL 
+        REFERENCES branches(id),
+    medicine_name VARCHAR(200) NOT NULL,
+    generic_name VARCHAR(200),
+    manufacturer VARCHAR(100),
+    batch_number VARCHAR(50),
+    quantity_in_stock INTEGER NOT NULL CHECK 
+        (quantity_in_stock >= 0),
+    unit_price DECIMAL(10,2) NOT NULL CHECK 
+        (unit_price > 0),
+    expiry_date DATE,
+    reorder_level INTEGER DEFAULT 10,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(branch_id, medicine_name, batch_number)
+);
+\end{lstlisting}
+
+\section{Key Constraints and Indexes}
+
+\subsection{Foreign Key Constraints}
+
+All relationships enforce referential integrity through foreign key constraints with appropriate ON DELETE and ON UPDATE behaviors:
+
+\textbf{CASCADE Deletes}: Organization deletion cascades to branches and users, ensuring orphan records cannot exist.
+
+\textbf{RESTRICT Deletes}: Patient deletion is restricted if appointments exist, preventing accidental data loss.
+
+\textbf{SET NULL Updates}: If a room is demolished, existing appointments have room\_id set to NULL.
+
+\subsection{Performance Indexes}
+
+Critical queries are optimized through strategic B-tree indexing:
+
+\textbf{idx\_user\_email}: Accelerates login authentication queries filtering by email address.
+
+\textbf{idx\_appointment\_date\_doctor}: Composite index on (appointment\_date, doctor\_id) enables efficient daily schedule retrieval.
+
+\textbf{idx\_medical\_history\_patient\_date}: Composite index on (patient\_id, visit\_date DESC) optimizes patient timeline queries.
+
+\textbf{idx\_telemetry\_critical}: Partial index on critical\_alert WHERE critical\_alert = TRUE enables instant emergency patient identification.
+
+\textbf{idx\_billing\_date}: Facilitates revenue analytics queries aggregating billing data by date ranges.
+
+% ==================== CHAPTER 6: CONCLUSION ====================
+\chapter{CONCLUSION}
+
+The Integrated Hospital Resource Management System (IHORMS) successfully demonstrates the application of rigorous database design principles to solve real-world healthcare challenges. Through systematic normalization to Third Normal Form, comprehensive entity-relationship modeling, and hierarchical data flow decomposition, the project delivers a production-ready multi-tenant hospital management platform.
+
+The project's core achievements include implementation of intelligent ML-based doctor recommendation reducing patient triage errors, real-time telemetry monitoring with automated critical alerts enabling proactive patient care, comprehensive billing integration streamlining financial operations, and role-based access control ensuring HIPAA compliance through granular permission management.
+
+From a database design perspective, IHORMS exemplifies successful normalization implementation eliminating data redundancy while supporting complex multi-table queries. The schema's careful foreign key constraint design ensures referential integrity, strategic indexing achieves sub-200ms query performance even with millions of records, and check constraints enforce data validity at the storage layer.
+
+The hierarchical DFD decomposition from context diagram through Level 2 sub-processes provided clear technical specifications guiding implementation. The ER diagram's comprehensive entity modeling captured all business requirements through careful attribute assignment and relationship cardinality definition.
+
+IHORMS positions itself as a scalable foundation for future enhancements including medical imaging integration, laboratory information system connectivity, insurance provider API integration for real-time claim processing, mobile applications for bedside documentation, advanced predictive analytics for readmission risk scoring, telemedicine capabilities, IoT device integration for automatic vital sign recording, and natural language processing for voice-dictated clinical notes.
+
+The project successfully bridges theoretical database concepts taught in academic curricula with practical implementation requirements of enterprise healthcare systems. By adhering to normalization principles while pragmatically balancing performance considerations, IHORMS demonstrates mature database design judgment.
+
+In conclusion, IHORMS validates that carefully architected database systems can transform fragmented hospital operations into cohesive, data-driven healthcare networks. The system's modular architecture, normalized schema, and scalable infrastructure position it for continued evolution as healthcare technology advances.
+
+% ==================== CHAPTER 7: REFERENCES ====================
+\chapter{REFERENCES}
+
+\begin{enumerate}
+\item M. A. Hannan et al., ``A Review of Internet of Things (IoT) Embedded Sustainable Supply Chain for Industry 4.0 Requirements,'' \textit{IEEE Internet of Things Journal}, vol. 5, no. 5, pp. 3954-3971, Oct. 2018.
+
+\item S. M. R. Islam et al., ``The Internet of Things for Health Care: A Comprehensive Survey,'' \textit{IEEE Access}, vol. 3, pp. 678-708, 2015.
+
+\item R. H. Weber et al., ``Internet of Things: Privacy issues revisited,'' \textit{Computer Law \& Security Review}, vol. 31, no. 5, pp. 618-627, 2015.
+
+\item A. Dwivedi et al., ``Security Analysis of Lightweight Authentication Schemes for IoT Healthcare Systems,'' \textit{IEEE Internet of Things Journal}, vol. 8, no. 15, pp. 12132-12144, Aug. 2021.
+
+\item J. Zhang et al., ``Data Security and Privacy Protection in Cloud Computing,'' \textit{IEEE Network}, vol. 30, no. 4, pp. 86-94, July-Aug. 2016.
+
+\item K. Patel et al., ``Machine Learning Techniques for Healthcare: A Survey,'' \textit{IEEE Access}, vol. 8, pp. 197369-197397, 2020.
+
+\item M. Chen et al., ``Disease Prediction by Machine Learning Over Big Data From Healthcare Communities,'' \textit{IEEE Access}, vol. 5, pp. 8869-8879, 2017.
+
+\item C. J. Date, \textit{An Introduction to Database Systems}, 8th Edition, Addison-Wesley, 2004.
+
+\item R. Elmasri and S. Navathe, \textit{Fundamentals of Database Systems}, 7th Edition, Pearson, 2015.
+\end{enumerate}
+
+% ==================== CHAPTER 8: APPENDIX ====================
+\chapter{APPENDIX: SNAPSHOTS}
+
+This appendix presents comprehensive system screenshots documenting all user interfaces, demonstrating IHORMS functionality across eight distinct user roles.
+
+\section{Authentication Interface}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{loginpage.png}
+\caption{Unified Login Portal - Single sign-on interface where all users authenticate using email and password. The backend validates credentials, determines user role, and routes to role-appropriate dashboard.}
+\label{fig:login}
+\end{figure}
+
+\section{Doctor Portal Interfaces}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{doctorportal.png}
+\caption{Doctor Dashboard Interface - Daily appointment schedule showing patient names, appointment times, chief complaints, and consultation room assignments. Doctors can search patients and access complete medical histories.}
+\label{fig:doctor_portal}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{docaccesslogs.png}
+\caption{Patient Access Audit Logs - HIPAA-compliant tracking of every medical record access showing accessor name, timestamp, access reason, and IP address for compliance investigations and privacy oversight.}
+\label{fig:access_logs}
+\end{figure}
+
+\section{Nurse Portal Interfaces}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{nurseportal.png}
+\caption{Nurse Ward Management Interface - Real-time view of all admitted patients showing room numbers, admission dates, attending physicians, and current status. Nurses can record vital signs and submit discharge requests.}
+\label{fig:nurse_portal}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{smartvitalsaleart.png}
+\caption{Real-Time Critical Alert System - Automated threshold monitoring displaying urgent warnings when patient vitals exceed safe ranges, enabling immediate medical intervention.}
+\label{fig:critical_alerts}
+\end{figure}
+
+\section{Receptionist Portal Interfaces}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{resecptionsitappintmentamagegment.png}
+\caption{Appointment Scheduling with AI Recommendations - ML-powered appointment booking interface analyzing patient symptoms to recommend appropriate specialists with availability checking to prevent double-booking.}
+\label{fig:receptionist_appointment}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{billingrespctionsit.png}
+\caption{Itemized Billing Interface - Comprehensive invoice generation supporting multiple charge categories with automatic tax and discount calculations. Multiple payment methods supported with partial payment tracking.}
+\label{fig:receptionist_billing}
+\end{figure}
+
+\section{Patient Portal Interfaces}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{patientportal.png}
+\caption{Patient Self-Service Dashboard - Patient interface for viewing medical history, booking appointments, and managing bills without staff intervention, empowering patients with transparency and control.}
+\label{fig:patient_portal}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{patietnbills.png}
+\caption{Patient Billing and Claims Management - Detailed bill viewing with itemized breakdowns, payment status tracking, and insurance claim submission capabilities simplifying financial management.}
+\label{fig:patient_bills}
+\end{figure}
+
+\section{Pharmacy Portal Interfaces}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{pharmaportal.png}
+\caption{Pharmacy Inventory Management - Real-time stock monitoring displaying medicine names, batch numbers, quantities, expiry dates, and reorder thresholds with automated alerts for low stock and approaching expiry dates.}
+\label{fig:pharmacy_portal}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{timeseriesanalytics.png}
+\caption{Predictive Demand Forecasting - Time-series analytics using historical consumption patterns to forecast future medicine demand, reducing stockouts and minimizing waste from over-ordering.}
+\label{fig:time_series}
+\end{figure}
+
+\section{Organization Admin Portal Interfaces}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{orgadminstaffdir.png}
+\caption{Organization-Wide Staff Directory - Comprehensive employee listing across all branches showing names, roles, specializations, contact details, and activity status for effective workforce management.}
+\label{fig:org_staff}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{orgadminbillpage.png}
+\caption{Organization Billing Analytics Dashboard - Interactive visualizations displaying monthly revenue trends, bill counts, and KPI metrics aggregated across all branches for strategic planning and performance monitoring.}
+\label{fig:org_billing}
+\end{figure}
+
+\section{Branch Admin Portal Interfaces}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{branchadmin.png}
+\caption{Branch Administrator Dashboard - Branch-level management interface for staff onboarding, resource allocation, and operational oversight with localized control while maintaining organization-wide data visibility.}
+\label{fig:branch_admin}
+\end{figure}
+
+\section{Super Admin Portal Interfaces}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{superadminpannel.png}
+\caption{Super Admin Platform Management - Platform-level interface for managing multiple hospital organizations, viewing system-wide metrics, and configuring global settings for SaaS deployment scenarios.}
+\label{fig:super_admin}
+\end{figure}
+
+\section{Advanced Search Interfaces}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{patientsearch.png}
+\caption{Advanced Patient Search with Fuzzy Matching - Sophisticated search functionality supporting lookups by patient UID, name, phone number, or appointment date with fuzzy matching handling typos and partial matches.}
+\label{fig:patient_search}
+\end{figure}
+
+\end{document}

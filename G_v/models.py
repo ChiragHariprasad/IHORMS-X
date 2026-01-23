@@ -29,6 +29,11 @@ class AppointmentStatus(enum.Enum):
     REJECTED = "rejected"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
+    ADMITTED = "admitted"
+
+class AdmissionStatus(enum.Enum):
+    ADMITTED = "admitted"
+    DISCHARGED = "discharged"
 
 class OrderStatus(enum.Enum):
     PENDING = "pending"
@@ -142,6 +147,30 @@ class Patient(Base):
     @property
     def full_name(self):
         return f"{self.user.first_name} {self.user.last_name}"
+
+    @property
+    def first_name(self):
+        return self.user.first_name
+
+    @property
+    def last_name(self):
+        return self.user.last_name
+
+    @property
+    def email(self):
+        return self.user.email
+
+    @property
+    def phone(self):
+        return self.user.phone
+
+    @property
+    def date_of_birth(self):
+        return self.user.date_of_birth
+
+    @property
+    def gender(self):
+        return self.user.gender
 
 
     __table_args__ = (
@@ -260,6 +289,47 @@ class Appointment(Base):
         Index('idx_appointment_date_doctor', 'appointment_date', 'doctor_id'),
         Index('idx_appointment_patient', 'patient_id'),
     )
+
+class Admission(Base):
+    __tablename__ = 'admissions'
+    id = Column(Integer, primary_key=True)
+    patient_id = Column(Integer, ForeignKey('patients.id'), nullable=False)
+    doctor_id = Column(Integer, ForeignKey('doctors.id'), nullable=False)
+    appointment_id = Column(Integer, ForeignKey('appointments.id'), nullable=False, unique=True)
+    room_id = Column(Integer, ForeignKey('rooms.id'))
+    
+    admission_date = Column(DateTime, default=datetime.utcnow)
+    status = Column(SQLEnum(AdmissionStatus), default=AdmissionStatus.ADMITTED)
+    admitted_by = Column(Integer, ForeignKey('users.id')) # Doctor user_id
+
+    discharge_requested = Column(Boolean, default=False)
+    discharge_requested_by = Column(Integer, ForeignKey('users.id'))
+    discharge_request_notes = Column(Text)
+    discharge_request_date = Column(DateTime)
+    
+    discharge_approved_by = Column(Integer, ForeignKey('users.id'))
+    discharge_summary = Column(Text)
+    discharge_date = Column(DateTime)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    patient = relationship("Patient")
+    doctor = relationship("Doctor", foreign_keys=[doctor_id])
+    appointment = relationship("Appointment")
+    room = relationship("Room")
+
+    @property
+    def patient_name(self):
+        return self.patient.full_name if self.patient else "Unknown"
+    
+    @property
+    def room_number(self):
+        return self.room.room_number if self.room else "N/A"
+    
+    @property
+    def room_type(self):
+        return self.room.room_type.value if self.room else "N/A"
 
 class MedicalHistory(Base):
     __tablename__ = 'medical_history'

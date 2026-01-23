@@ -28,6 +28,9 @@
                 <a href="#" data-tab="patients">
                     <i class="fas fa-user-injured"></i> Patient Records
                 </a>
+                <a href="#" data-tab="discharge">
+                    <i class="fas fa-clipboard-check"></i> Discharge Approvals
+                </a>
             </nav>
         </aside>
 
@@ -103,6 +106,32 @@
                     <div id="patientResult"></div>
                 </div>
             </div>
+
+            <!-- Discharge Approvals Tab -->
+            <div id="dischargeTab" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-procedures"></i> Pending Discharge Requests</h3>
+                        <button class="btn btn-outline btn-sm" onclick="loadDischargeRequests()">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Room</th>
+                                    <th>Admitted On</th>
+                                    <th>Nurse Notes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dischargeRequestsTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -147,7 +176,54 @@
         </div>
     </div>
 
-    <script src="../js/api.js"></script>
+    <!-- Appointment Detail Modal -->
+    <div class="modal-overlay" id="appointmentDetailModal">
+        <div class="modal" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-info-circle"></i> Appointment Details</h3>
+                <button class="modal-close" onclick="closeModal('appointmentDetailModal')">&times;</button>
+            </div>
+            <div class="modal-body" id="appointmentDetailBody">
+                <!-- Content injected via JS -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('appointmentDetailModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admit Patient Modal -->
+    <div class="modal-overlay" id="admitModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-procedures"></i> Admit Patient</h3>
+                <button class="modal-close" onclick="closeModal('admitModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="admitForm">
+                    <input type="hidden" id="admitAppointmentId">
+                    <p style="margin-bottom: 16px;">Select the type of room for admission. A free room will be
+                        automatically assigned.</p>
+                    <div class="form-group">
+                        <label>Admission Type</label>
+                        <select class="form-control" name="room_type" required>
+                            <option value="general_ward">General Ward</option>
+                            <option value="icu">ICU (Intensive Care)</option>
+                            <option value="emergency">Emergency</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('admitModal')">Cancel</button>
+                <button class="btn btn-danger" onclick="submitAdmit()">
+                    <i class="fas fa-procedures"></i> Confirm Admission
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/api.js?v=20240123"></script>
     <script>
         const user = JSON.parse(localStorage.getItem('user') || '{}');
         if (!user.id || user.role !== 'doctor') window.location.href = '../index.html';
@@ -173,6 +249,7 @@
 
                 if (tab === 'schedule') loadSchedule();
                 if (tab === 'appointments') loadAppointments();
+                if (tab === 'discharge') loadDischargeRequests();
             });
         });
 
@@ -197,8 +274,9 @@
                         </div>
                         <span class="badge badge-${getStatusBadge(apt.status)}">${apt.status}</span>
                         <div style="display: flex; gap: 8px; margin-left: 16px;">
+                            <button class="btn btn-outline btn-sm" onclick="showAppointmentDetails(${apt.id})"><i class="fas fa-eye"></i> View</button>
                             ${apt.status === 'scheduled' ? `<button class="btn btn-success btn-sm" onclick="acceptAppointment(${apt.id})"><i class="fas fa-check"></i> Accept</button>` : ''}
-                            ${apt.status === 'accepted' ? `<button class="btn btn-primary btn-sm" onclick="openNotesModal(${apt.id})"><i class="fas fa-file-medical"></i> Notes</button>` : ''}
+                            ${apt.status === 'accepted' ? `<button class="btn btn-primary btn-sm" onclick="openNotesModal(${apt.id})"><i class="fas fa-file-medical"></i> Notes</button> <button class="btn btn-danger btn-sm" onclick="openAdmitModal(${apt.id})"><i class="fas fa-procedures"></i> Admit</button>` : ''}
                         </div>
                     </div>
                 `).join('');
@@ -226,6 +304,7 @@
                         <td>${apt.chief_complaint || '-'}</td>
                         <td><span class="badge badge-${getStatusBadge(apt.status)}">${apt.status}</span></td>
                         <td>
+                            <button class="btn btn-outline btn-sm" onclick="showAppointmentDetails(${apt.id})">View</button>
                             ${apt.status === 'scheduled' ? `<button class="btn btn-success btn-sm" onclick="acceptAppointment(${apt.id})">Accept</button>` : ''}
                             ${apt.status === 'accepted' ? `<button class="btn btn-primary btn-sm" onclick="openNotesModal(${apt.id})">Add Notes</button>` : ''}
                         </td>
@@ -237,7 +316,7 @@
         }
 
         function getStatusBadge(status) {
-            const badges = { 'scheduled': 'info', 'accepted': 'warning', 'completed': 'success', 'rejected': 'danger' };
+            const badges = { 'scheduled': 'info', 'accepted': 'warning', 'completed': 'success', 'rejected': 'danger', 'admitted': 'danger' };
             return badges[status] || 'secondary';
         }
 
@@ -273,6 +352,24 @@
             }
         }
 
+        function openAdmitModal(id) {
+            document.getElementById('admitAppointmentId').value = id;
+            document.getElementById('admitModal').classList.add('active');
+        }
+
+        async function submitAdmit() {
+            const id = document.getElementById('admitAppointmentId').value;
+            const type = document.getElementById('admitForm').elements['room_type'].value;
+            try {
+                await api.admitPatient(id, type);
+                closeModal('admitModal');
+                loadSchedule();
+                alert('Patient Admitted Successfully!');
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
         async function searchPatient() {
             const uid = document.getElementById('patientSearchInput').value;
             const resultDiv = document.getElementById('patientResult');
@@ -282,14 +379,45 @@
                 const patient = await api.searchPatient(uid);
                 resultDiv.innerHTML = `
                     <div class="card" style="border-left: 4px solid var(--primary);">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
                             <div>
-                                <h4 style="margin-bottom: 4px;">${patient.first_name} ${patient.last_name}</h4>
-                                <p class="text-muted"><i class="fas fa-id-card"></i> UID: ${patient.patient_uid}</p>
+                                <h4 style="margin-bottom: 8px; font-size: 1.25rem;">${patient.first_name} ${patient.last_name}</h4>
+                                <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px;">
+                                    <div class="stat-card" style="padding: 10px;">
+                                        <div class="label">UID</div>
+                                        <div class="value" style="font-size: 1rem;">${patient.patient_uid}</div>
+                                    </div>
+                                    <div class="stat-card" style="padding: 10px;">
+                                        <div class="label">Blood Group</div>
+                                        <div class="value" style="font-size: 1rem; color: var(--danger);">${patient.blood_group || 'N/A'}</div>
+                                    </div>
+                                    <div class="stat-card" style="padding: 10px;">
+                                        <div class="label">Gender</div>
+                                        <div class="value" style="font-size: 1rem;">${patient.gender || 'N/A'}</div>
+                                    </div>
+                                </div>
+                                <p class="text-muted" style="margin-bottom: 4px;"><i class="fas fa-calendar-alt"></i> DOB: ${patient.date_of_birth || 'N/A'}</p>
+                                <p class="text-muted"><i class="fas fa-phone"></i> Contact: ${patient.phone || 'N/A'}</p>
                             </div>
                             <button class="btn btn-primary" onclick="viewHistory(${patient.id})">
-                                <i class="fas fa-history"></i> View Full History
+                                <i class="fas fa-history"></i> Load Patient History
                             </button>
+                        </div>
+                        <div id="historyTableContainer" style="margin-top: 24px; display: none;">
+                            <h5 style="margin-bottom: 12px;">Past Appointments & Records</h5>
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Diagnosis</th>
+                                            <th>Provider</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="historyTableBody"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -299,12 +427,164 @@
         }
 
         async function viewHistory(patientId) {
+            const container = document.getElementById('historyTableContainer');
+            const tbody = document.getElementById('historyTableBody');
+            container.style.display = 'block';
+            tbody.innerHTML = '<tr><td colspan="4" class="loading"><div class="spinner"></div></td></tr>';
+
             try {
                 const history = await api.getPatientHistory(patientId);
-                // For now, simpler display, can be a modal later
-                alert("History Records: " + history.length + "\nLatest: " + (history[0]?.diagnosis || 'No diagnosis yet'));
+                if (!history || history.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No medical history records found.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = history.map(rec => `
+                    <tr>
+                        <td>${new Date(rec.visit_date).toLocaleDateString()}</td>
+                        <td><strong>${rec.diagnosis}</strong></td>
+                        <td>Dr. ${rec.doctor_name || 'N/A'}</td>
+                        <td>
+                            ${rec.appointment_id ? `<button class="btn btn-outline btn-sm" onclick="showAppointmentDetails(${rec.appointment_id})">View Record</button>` : '-'}
+                        </td>
+                    </tr>
+                `).join('');
             } catch (error) {
-                alert(error.message);
+                tbody.innerHTML = `<tr><td colspan="4" class="alert alert-danger">${error.message}</td></tr>`;
+            }
+        }
+
+        async function showAppointmentDetails(id) {
+            const body = document.getElementById('appointmentDetailBody');
+            document.getElementById('appointmentDetailModal').classList.add('active');
+            body.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+            try {
+                const apt = await api.getAppointmentDetail(id);
+                body.innerHTML = `
+                    <div class="detail-section">
+                        <h4><i class="fas fa-user"></i> Patient Information</h4>
+                        <div class="form-row">
+                            <p><strong>Name:</strong> ${apt.patient_name}</p>
+                            <p><strong>UID:</strong> ${apt.patient_uid}</p>
+                        </div>
+                        <div class="form-row" style="margin-top: 8px;">
+                            <p><strong>Date:</strong> ${apt.appointment_date}</p>
+                            <p><strong>Time:</strong> ${apt.appointment_time}</p>
+                            <p><strong>Status:</strong> <span class="badge badge-${getStatusBadge(apt.status)}">${apt.status}</span></p>
+                        </div>
+                    </div>
+
+                    <hr style="margin: 16px 0;">
+
+                    <div class="detail-section">
+                        <h4><i class="fas fa-heartbeat"></i> Vitals & Telemetry</h4>
+                        ${apt.telemetry && apt.telemetry.length > 0 ? `
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Time</th>
+                                            <th>BP</th>
+                                            <th>Heart Rate</th>
+                                            <th>Temp</th>
+                                            <th>SpO2</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${apt.telemetry.map(t => `
+                                            <tr>
+                                                <td>${new Date(t.recorded_at).toLocaleTimeString()}</td>
+                                                <td>${t.blood_pressure_systolic}/${t.blood_pressure_diastolic}</td>
+                                                <td>${t.heart_rate} bpm</td>
+                                                <td>${t.temperature}°C</td>
+                                                <td>${t.oxygen_saturation}%</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ` : '<p class="text-muted">No vitals recorded for this session.</p>'}
+                    </div>
+
+                    <hr style="margin: 16px 0;">
+
+                    <div class="detail-section">
+                        <h4><i class="fas fa-notes-medical"></i> Clinical Records</h4>
+                        <div class="form-group">
+                            <label>Chief Complaint</label>
+                            <p class="card" style="padding: 12px; background: var(--bg-light);">${apt.chief_complaint || 'None'}</p>
+                        </div>
+                        ${apt.status === 'completed' ? `
+                            <div class="form-group">
+                                <label>Diagnosis</label>
+                                <p class="card" style="padding: 12px; background: var(--bg-light); border-left: 4px solid var(--success);"><strong>${apt.diagnosis || 'N/A'}</strong></p>
+                            </div>
+                            <div class="form-group">
+                                <label>Notes</label>
+                                <p class="text-muted">${apt.notes || 'No notes provided.'}</p>
+                            </div>
+                            <div class="form-group">
+                                <label>Prescription</label>
+                                <p class="card" style="padding: 12px; background: #f0fdf4; border: 1px dashed var(--success); white-space: pre-line;">${apt.prescription || 'N/A'}</p>
+                            </div>
+                             <div class="form-group">
+                                <label>Final Verdict</label>
+                                <p>${apt.verdict || 'N/A'}</p>
+                            </div>
+                        ` : `<p class="alert alert-info" style="margin-top: 12px;">Notes and diagnosis will be available after the session is completed.</p>`}
+                    </div>
+                `;
+            } catch (error) {
+                body.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+            }
+        }
+
+        async function loadDischargeRequests() {
+            const tbody = document.getElementById('dischargeRequestsTable');
+            tbody.innerHTML = '<tr><td colspan="5" class="loading"><div class="spinner"></div></td></tr>';
+
+            try {
+                const requests = await api.request('/doctor/discharge-requests');
+                if (!requests || requests.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No pending discharge requests.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = requests.map(req => `
+                    <tr>
+                        <td><strong>${req.patient_name}</strong></td>
+                        <td>${req.room_number || 'N/A'}</td>
+                        <td>${new Date(req.admission_date).toLocaleDateString()}</td>
+                        <td>${req.discharge_request_notes || 'No notes provided'}</td>
+                        <td>
+                            <button class="btn btn-success btn-sm" onclick="approveDischargeRequest(${req.id}, true)" style="margin-right: 5px;">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="approveDischargeRequest(${req.id}, false)">
+                                <i class="fas fa-times"></i> Reject
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="5" class="alert alert-danger">${error.message}</td></tr>`;
+            }
+        }
+
+        async function approveDischargeRequest(admissionId, approved) {
+            let summary = '';
+            if (approved) {
+                summary = prompt('Enter discharge summary:');
+                if (summary === null) return; // User cancelled
+            }
+
+            try {
+                await api.approveDischarge(admissionId, approved, summary || 'Discharge rejected');
+                alert(approved ? 'Patient discharged successfully!' : 'Discharge request rejected');
+                loadDischargeRequests();
+            } catch (error) {
+                alert(`Error: ${error.message}`);
             }
         }
 

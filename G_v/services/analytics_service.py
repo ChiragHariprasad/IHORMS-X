@@ -93,6 +93,8 @@ class AnalyticsService:
         
         doc_count = self.db.query(User).filter(User.branch_id == branch_id, User.role == UserRole.DOCTOR).count()
         nurse_count = self.db.query(User).filter(User.branch_id == branch_id, User.role == UserRole.NURSE).count()
+        receptionist_count = self.db.query(User).filter(User.branch_id == branch_id, User.role == UserRole.RECEPTIONIST).count()
+        pharmacy_count = self.db.query(User).filter(User.branch_id == branch_id, User.role == UserRole.PHARMACY_STAFF).count()
         
         # Appointments
         today = datetime.now().date()
@@ -108,16 +110,30 @@ class AnalyticsService:
             Appointment.appointment_date >= week_ago
         ).count()
         
+        # Equipment status
+        total_equipment = self.db.query(Equipment).filter(Equipment.branch_id == branch_id).count()
+        working_equipment = self.db.query(Equipment).filter(
+            Equipment.branch_id == branch_id,
+            Equipment.is_operational == True
+        ).count()
+        
         return {
             "branch_id": branch_id,
             "branch_name": branch.name,
             "total_doctors": doc_count,
             "total_nurses": nurse_count,
+            "total_receptionists": receptionist_count,
+            "total_pharmacy_staff": pharmacy_count,
             "total_patients": self.db.query(Patient).filter(Patient.branch_id == branch_id).count(),
             "appointments_today": app_today,
             "appointments_this_week": app_week,
             "room_occupancy": {
                 "total": self.db.query(Room).filter(Room.branch_id == branch_id).count(),
                 "available": self.db.query(Room).filter(Room.branch_id == branch_id, Room.is_available == True).count()
+            },
+            "equipment_status": {
+                "total": total_equipment,
+                "working": working_equipment,
+                "maintenance_needed": total_equipment - working_equipment
             }
         }

@@ -245,6 +245,72 @@ class AppointmentService:
         
         self.db.commit()
         return appointment
+    def confirm_appointment(self, appointment_id: int, staff_user_id: int) -> Appointment:
+        """Receptionist confirms an appointment (accepts it)"""
+        appointment = self.get_appointment_by_id(appointment_id)
+        if not appointment:
+            raise NotFoundError("Appointment", str(appointment_id))
+        
+        if appointment.status != AppointmentStatus.SCHEDULED:
+            raise ValidationError(f"Cannot confirm appointment with status: {appointment.status.value}")
+        
+        appointment.status = AppointmentStatus.ACCEPTED
+        
+        audit_logger.log_action(
+            self.db, staff_user_id, "APPOINTMENT_CONFIRMED", "Appointment", appointment_id
+        )
+        
+        self.db.commit()
+        return appointment
+
+    def admit_patient(self, appointment_id: int, room_type: str, doctor_user_id: int) -> Appointment:
+        """Admit a patient to a room"""
+        appointment = self.get_appointment_by_id(appointment_id)
+        if not appointment:
+            raise NotFoundError("Appointment", str(appointment_id))
+        
+        doctor = self.db.query(Doctor).filter(Doctor.user_id == doctor_user_id).first()
+        if appointment.doctor_id != doctor.id:
+            raise ForbiddenError("This appointment is not assigned to you")
+            
+        # Find available room
+        from models import Branch  # Local import to avoid circular dependency if any
+        room = self.db.query(Room).join(Branch).join(User).filter(
+            User.id == doctor_user_id,
+            Room.branch_id == User.branch_id,
+            Room.room_type == getattr(RoomType, room_type.upper(), RoomType.GENERAL_WARD),
+            Room.is_available == True
+        ).first()
+        
+        
+        if not room:
+            raise ConflictError(f"No available {room_type} rooms found in this branch")
+            
+        appointment.status = AppointmentStatus.ADMITTED
+        appointment.room_id = room.id
+        room.is_available = False
+
+        # Create Admission record
+        from models import Admission, AdmissionStatus # Local import
+        admission = Admission(
+            patient_id=appointment.patient_id,
+            doctor_id=appointment.doctor_id,
+            appointment_id=appointment.id,
+            room_id=room.id,
+            admitted_by=doctor_user_id,
+            status=AdmissionStatus.ADMITTED,
+            admission_date=datetime.utcnow()
+        )
+        self.db.add(admission)
+        
+        audit_logger.log_action(
+            self.db, doctor_user_id, "PATIENT_ADMITTED", "Appointment", appointment_id,
+            after_state={"room_id": room.id, "room_type": room_type, "admission_id": admission.id}
+        )
+        
+        self.db.commit()
+        return appointment
+
     def get_doctor_appointments(self, doctor_user_id: int) -> Tuple[List[Appointment], int]:
         """Get all appointments for a doctor"""
         doctor = self.db.query(Doctor).filter(Doctor.user_id == doctor_user_id).first()

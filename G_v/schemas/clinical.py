@@ -76,7 +76,10 @@ class RoomResponse(BaseModel):
     room_type: str
     floor: Optional[int]
     capacity: int
+    capacity: int
     is_available: bool
+    occupant_name: Optional[str] = None
+    appointment_id: Optional[int] = None
     
     class Config:
         from_attributes = True

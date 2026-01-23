@@ -14,7 +14,7 @@ from config import settings
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 @router.post("/login", response_model=LoginResponse)
-async def login(data: LoginRequest, db: Session = Depends(get_db)):
+def login(data: LoginRequest, db: Session = Depends(get_db)):
     user_service = UserService(db)
     user = user_service.authenticate_user(data.email, data.password)
     

@@ -24,6 +24,9 @@
                 <a href="#" data-tab="orders">
                     <i class="fas fa-receipt"></i> Pending Orders
                 </a>
+                <a href="#" data-tab="insights">
+                    <i class="fas fa-chart-line"></i> Analytics & Insights
+                </a>
             </nav>
         </aside>
 
@@ -86,10 +89,69 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Insights Tab -->
+            <div id="insightsTab" class="tab-content">
+                <div class="card" style="margin-bottom: 20px;">
+                    <div class="card-header">
+                        <h3><i class="fas fa-brain"></i> AI Demand Prediction (Next 7 Days)</h3>
+                        <div class="badge badge-info">AI Model: Prophet Time Series</div>
+                    </div>
+                    <div class="card-body">
+                        <div id="demandChart"
+                            style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: space-around; padding: 10px;">
+                            <!-- Charts injected here -->
+                            <div class="loading">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-truck-loading"></i> Smart Restock Recommendations</h3>
+                        </div>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Medicine</th>
+                                        <th>Current</th>
+                                        <th>Add Qty</th>
+                                        <th>Reason</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="restockTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-hourglass-end"></i> Expiry Tracking</h3>
+                        </div>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Medicine</th>
+                                        <th>Batch</th>
+                                        <th>Expires</th>
+                                        <th>Track</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="expiryTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
-    <script src="../js/api.js"></script>
+    <script src="../js/api.js?v=2"></script>
     <script>
         const user = JSON.parse(localStorage.getItem('user') || '{}');
         if (!user.id || user.role !== 'pharmacy_staff') window.location.href = '../index.html';
@@ -113,7 +175,8 @@
                 document.getElementById('pageTitle').textContent = target.textContent.trim();
 
                 if (tab === 'orders') loadOrders();
-                else loadInventory();
+                if (tab === 'insights') loadInsights();
+                if (tab === 'inventory') loadInventory();
             });
         });
 
@@ -181,6 +244,51 @@
                 alert('Order fulfilled and inventory updated!');
             } catch (error) {
                 alert(error.message);
+            }
+        }
+
+        async function loadInsights() {
+            try {
+                const data = await api.getPharmaInsights();
+
+                // 1. Demand Chart
+                const chartHtml = data.demand_forecast.map(item => `
+                    <div class="chart-box" style="width: 200px;">
+                        <h5>${item.item_name}</h5>
+                        <div class="progress-bar-container">
+                             <div class="progress-label">Predicted: ${item.predicted_demand_7d} units</div>
+                             <progress value="${item.predicted_demand_7d}" max="${item.predicted_demand_7d * 1.5}"></progress>
+                        </div>
+                        <small class="text-muted">Confidence: ${item.confidence_score}%</small>
+                    </div>
+                `).join('');
+                document.getElementById('demandChart').innerHTML = chartHtml || '<p>No sufficient data for prediction.</p>';
+
+                // 2. Restock Table
+                const restockHtml = data.restock_recommendations.map(r => `
+                    <tr>
+                        <td><strong>${r.item_name}</strong></td>
+                        <td>${r.current}</td>
+                        <td style="color: green; font-weight: bold;">+${r.recommended_add}</td>
+                        <td><small>${r.reason}</small></td>
+                    </tr>
+                `).join('');
+                document.getElementById('restockTable').innerHTML = restockHtml || '<tr><td colspan="4" class="empty-state">Stock levels look healthy!</td></tr>';
+
+                // 3. Expiry Table
+                const expiryHtml = data.expiring_soon.map(e => `
+                    <tr style="background-color: #fff3f3;">
+                        <td><strong>${e.item_name}</strong></td>
+                        <td>${e.batch}</td>
+                        <td style="color: #dc3545;">${e.expiry_date} (${e.days_remaining} days)</td>
+                        <td><span class="badge badge-danger">Expiring</span></td>
+                    </tr>
+                `).join('');
+                document.getElementById('expiryTable').innerHTML = expiryHtml || '<tr><td colspan="4" class="empty-state">No items expiring soon.</td></tr>';
+
+            } catch (e) {
+                console.error(e);
+                document.getElementById('demandChart').innerHTML = `<div class="alert alert-danger">Error loading insights. ${e.message}</div>`;
             }
         }
 

@@ -30,6 +30,9 @@
                 <a href="#" data-tab="book">
                     <i class="fas fa-plus-circle"></i> Book New
                 </a>
+                <a href="#" data-tab="bills">
+                    <i class="fas fa-file-invoice-dollar"></i> My Bills
+                </a>
             </nav>
         </aside>
 
@@ -125,10 +128,36 @@
                     </form>
                 </div>
             </div>
+
+            <!-- Bills Tab -->
+            <div id="billsTab" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-receipt"></i> Pending & Paid Bills</h3>
+                        <button class="btn btn-outline" onclick="loadBills()">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Bill #</th>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="billsTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
-    <script src="../js/api.js"></script>
+    <script src="../js/api.js?v=2"></script>
     <script>
         const user = JSON.parse(localStorage.getItem('user') || '{}');
         if (!user.id || user.role !== 'patient') window.location.href = '../index.html';
@@ -154,6 +183,7 @@
                 if (tab === 'history') loadHistory();
                 if (tab === 'appointments') loadAppointments();
                 if (tab === 'book') loadDoctors();
+                if (tab === 'bills') loadBills();
             });
         });
 
@@ -247,8 +277,82 @@
             }
         });
 
-        function logout() { localStorage.clear(); window.location.href = '../index.html'; }
+        async function loadBills() {
+            try {
+                const bills = await api.getMyBills();
+                if (!bills || bills.length === 0) {
+                    document.getElementById('billsTable').innerHTML = '<tr><td colspan="5" class="empty-state">No bills found.</td></tr>';
+                    return;
+                }
+                document.getElementById('billsTable').innerHTML = bills.map(bill => {
+                    const isPending = bill.payment_status === 'pending' || bill.payment_status === 'partial';
+                    const statusClass = bill.payment_status === 'paid' ? 'badge-success' : 'badge-warning';
+                    return `
+                        <tr>
+                            <td><strong>${bill.bill_number}</strong></td>
+                            <td>${new Date(bill.bill_date).toLocaleDateString()}</td>
+                            <td><strong>₹${bill.total_amount}</strong><br><small class="text-muted">Paid: ₹${bill.amount_paid}</small></td>
+                            <td><span class="badge ${statusClass}">${bill.payment_status.toUpperCase()}</span></td>
+                            <td>
+                                ${isPending ? `
+                                    <button class="btn btn-success btn-sm" onclick="payBill(${bill.id}, ${bill.total_amount - bill.amount_paid})"  style="margin-right: 5px;">
+                                        <i class="fas fa-credit-card"></i> Pay Now
+                                    </button>
+                                    <button class="btn btn-outline btn-sm" onclick="showInsuranceModal(${bill.id})">
+                                        <i class="fas fa-shield-alt"></i> Insurance
+                                    </button>
+                                ` : '<span class="text-muted">Paid</span>'}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                document.getElementById('billsTable').innerHTML = `<tr><td colspan="5" class="alert alert-danger">${error.message}</td></tr>`;
+            }
+        }
+
+        async function payBill(billId, amount) {
+            if (!confirm(`Pay ₹${amount} now?`)) return;
+            const paymentMethod = prompt("Payment method (CARD/CASH/UPI):", "CARD");
+            if (!paymentMethod) return;
+
+            try {
+                await api.payBill(billId, paymentMethod.toUpperCase());
+                alert('Payment successful!');
+                loadBills();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        function showInsuranceModal(billId) {
+            const provider = prompt("Insurance Provider:", "Star Health");
+            if (!provider) return;
+            const policy = prompt("Policy Number:", "");
+            if (!policy) return;
+
+            claimInsurance(billId, provider, policy);
+        }
+
+        async function claimInsurance(billId, provider, policy) {
+            try {
+                await api.claimInsurance(billId, provider, policy);
+                alert('Insurance claim submitted successfully!');
+                loadBills();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '../index.html';
+        }
+
+        // Initial load
         loadProfile();
+        loadAppointments();
+        loadBills();
     </script>
 </body>
 

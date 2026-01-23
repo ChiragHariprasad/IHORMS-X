@@ -16,7 +16,7 @@ from auth.dependencies import get_branch_admin
 router = APIRouter(prefix="/branch-admin", tags=["Branch Admin"])
 
 @router.post("/doctors", response_model=UserResponse)
-async def add_doctor(
+def add_doctor(
     data: DoctorCreate, 
     db: Session = Depends(get_db),
     admin: User = Depends(get_branch_admin)
@@ -26,7 +26,7 @@ async def add_doctor(
     return user
 
 @router.post("/nurses", response_model=UserResponse)
-async def add_nurse(
+def add_nurse(
     data: NurseCreate, 
     db: Session = Depends(get_db),
     admin: User = Depends(get_branch_admin)
@@ -36,7 +36,7 @@ async def add_nurse(
     return user
 
 @router.post("/receptionists", response_model=UserResponse)
-async def add_receptionist(
+def add_receptionist(
     data: UserCreate, 
     db: Session = Depends(get_db),
     admin: User = Depends(get_branch_admin)
@@ -44,8 +44,17 @@ async def add_receptionist(
     service = UserService(db)
     return service.create_receptionist(data, admin.organization_id, admin.branch_id, admin.id)
 
+@router.post("/pharmacy", response_model=UserResponse)
+def add_pharmacy_staff(
+    data: UserCreate, 
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_branch_admin)
+):
+    service = UserService(db)
+    return service.create_pharmacy_staff(data, admin.organization_id, admin.branch_id, admin.id)
+
 @router.get("/staff")
-async def list_branch_staff(
+def list_branch_staff(
     page: int = 1,
     page_size: int = 20,
     db: Session = Depends(get_db),
@@ -56,7 +65,7 @@ async def list_branch_staff(
     return {"items": users, "total": total}
 
 @router.get("/analytics", response_model=BranchAnalytics)
-async def get_branch_stats(
+def get_branch_stats(
     db: Session = Depends(get_db),
     admin: User = Depends(get_branch_admin)
 ):
@@ -64,7 +73,7 @@ async def get_branch_stats(
     return service.get_branch_analytics(admin.branch_id)
 
 @router.post("/staff/{user_id}/disable")
-async def disable_staff(
+def disable_staff(
     user_id: int, 
     db: Session = Depends(get_db),
     admin: User = Depends(get_branch_admin)
@@ -76,3 +85,29 @@ async def disable_staff(
     
     service.disable_user(user_id, admin.id)
     return {"status": "success"}
+
+@router.get("/access-logs")
+def get_doctor_access_logs(
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_branch_admin)
+):
+    from models import PatientAccessLog, Patient, User
+    
+    # query logs where patient belongs to this branch and accessed by a doctor
+    results = db.query(PatientAccessLog, User.first_name, User.last_name, Patient.patient_uid)\
+        .join(User, PatientAccessLog.accessed_by == User.id)\
+        .join(Patient, PatientAccessLog.patient_id == Patient.id)\
+        .filter(
+            Patient.branch_id == admin.branch_id,
+            User.role == UserRole.DOCTOR
+        ).order_by(PatientAccessLog.accessed_at.desc()).limit(100).all()
+        
+    logs = []
+    for log, dr_first, dr_last, p_uid in results:
+        logs.append({
+            "doctor_name": f"Dr. {dr_first} {dr_last}",
+            "patient_uid": p_uid, # User requested "patient number", UID is appropriate
+            "accessed_at": log.accessed_at,
+            "access_type": log.access_type
+        })
+    return logs

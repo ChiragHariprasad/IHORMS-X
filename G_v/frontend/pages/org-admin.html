@@ -27,6 +27,9 @@
                 <a href="#" data-tab="staff">
                     <i class="fas fa-id-card"></i> Staff Directory
                 </a>
+                <a href="#" data-tab="billing">
+                    <i class="fas fa-chart-bar"></i> Billing Analytics
+                </a>
             </nav>
         </aside>
 
@@ -87,6 +90,7 @@
                                     <th>Position</th>
                                     <th>Branch Location</th>
                                     <th>Status</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="staffTable"></tbody>
@@ -94,10 +98,30 @@
                     </div>
                 </div>
             </div>
+
+            <div id="billingTab" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-rupee-sign"></i> Monthly Revenue Overview</h3>
+                        <button class="btn btn-outline btn-sm" onclick="loadBillingAnalytics()">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                    </div>
+                    <div style="padding: 24px;">
+                        <canvas id="billingChart" style="max-height: 400px;"></canvas>
+                    </div>
+                </div>
+                <div class="stats-grid" id="billingStats" style="margin-top: 20px;">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
-    <script src="../js/api.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="../js/api.js?v=2"></script>
     <script>
         const user = JSON.parse(localStorage.getItem('user') || '{}');
         if (!user.id || user.role !== 'org_admin') window.location.href = '../index.html';
@@ -122,6 +146,7 @@
                 if (tab === 'branches') loadBranches();
                 if (tab === 'staff') loadStaff();
                 if (tab === 'dashboard') loadDashboard();
+                if (tab === 'billing') loadBillingAnalytics();
             });
         });
 
@@ -170,10 +195,134 @@
                         <td><strong>${s.first_name} ${s.last_name}</strong></td>
                         <td><span class="badge badge-info">${s.role}</span></td>
                         <td>${s.branch_id || 'Global / HQ'}</td>
-                        <td><span class="badge badge-success">Active</span></td>
+                        <td><span class="badge ${s.is_active ? 'badge-success' : 'badge-danger'}">${s.is_active ? 'Active' : 'Disabled'}</span></td>
+                        <td>
+                            ${s.role === 'branch_admin' || s.role === 'org_admin' ? `
+                                <button class="btn ${s.is_active ? 'btn-outline' : 'btn-success'} btn-sm" onclick="toggleStaffAccess(${s.id})">
+                                    <i class="fas fa-${s.is_active ? 'ban' : 'check'}"></i> ${s.is_active ? 'Disable' : 'Reactivate'}
+                                </button>
+                            ` : '-'}
+                        </td>
                     </tr>
                 `).join('');
             } catch (e) { console.error(e); }
+        }
+
+        async function toggleStaffAccess(userId) {
+            if (!confirm("Are you sure you want to toggle this user's access?")) return;
+            try {
+                await api.toggleStaffAccess(userId);
+                loadStaff();
+                alert('User access updated successfully');
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        let billingChartInstance = null;
+
+        async function loadBillingAnalytics() {
+            try {
+                const data = await api.getBillingAnalytics(6);
+
+                // Update stats cards
+                document.getElementById('billingStats').innerHTML = `
+                    <div class="stat-card success">
+                        <div class="label"><i class="fas fa-rupee-sign"></i> Total Revenue (6 months)</div>
+                        <div class="value">₹${data.total_revenue?.toLocaleString() || '0'}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label"><i class="fas fa-receipt"></i> Total Bills</div>
+                        <div class="value">${data.total_bills || 0}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label"><i class="fas fa-calculator"></i> Average Bill Amount</div>
+                        <div class="value">₹${data.average_bill?.toLocaleString() || '0'}</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <div class="label"><i class="fas fa-exclamation-circle"></i> Outstanding</div>
+                        <div class="value">₹${data.outstanding_amount?.toLocaleString() || '0'}</div>
+                    </div>
+                `;
+
+                // Destroy existing chart if it exists
+                if (billingChartInstance) {
+                    billingChartInstance.destroy();
+                }
+
+                // Create chart
+                const ctx = document.getElementById('billingChart').getContext('2d');
+                const monthlyData = data.monthly_data || [];
+
+                billingChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: monthlyData.map(m => m.month),
+                        datasets: [{
+                            label: 'Revenue (₹)',
+                            data: monthlyData.map(m => m.revenue),
+                            borderColor: 'rgb(59, 130, 246)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }, {
+                            label: 'Bills Count',
+                            data: monthlyData.map(m => m.bill_count),
+                            borderColor: 'rgb(16, 185, 129)',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            yAxisID: 'y1'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: 'Monthly Billing Trends',
+                                font: {
+                                    size: 16
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: {
+                                    display: true,
+                                    text: 'Revenue (₹)'
+                                }
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                title: {
+                                    display: true,
+                                    text: 'Bill Count'
+                                },
+                                grid: {
+                                    drawOnChartArea: false
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (e) {
+                console.error('Error loading billing analytics:', e);
+                document.getElementById('billingStats').innerHTML = `<div class="alert alert-danger">Error loading billing analytics: ${e.message}</div>`;
+            }
         }
 
         function logout() { localStorage.clear(); window.location.href = '../index.html'; }

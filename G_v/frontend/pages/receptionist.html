@@ -27,6 +27,9 @@
                 <a href="#" data-tab="newPatient">
                     <i class="fas fa-user-plus"></i> New Patient
                 </a>
+                <a href="#" data-tab="billing">
+                    <i class="fas fa-file-invoice-dollar"></i> Create Bill
+                </a>
             </nav>
         </aside>
 
@@ -46,10 +49,16 @@
             <div id="appointmentsTab" class="tab-content active">
                 <div class="card">
                     <div class="card-header">
-                        <h3>Today's Appointments</h3>
-                        <button class="btn btn-primary" onclick="showBookingModal()">
-                            <i class="fas fa-plus"></i> Book Appointment
-                        </button>
+                        <h3>Appointments</h3>
+                        <div class="header-controls" style="display: flex; gap: 10px; align-items: center;">
+                            <input type="date" id="appointmentDate" class="form-control" style="width: auto;">
+                            <button class="btn btn-outline" onclick="loadAppointments()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                            <button class="btn btn-primary" onclick="showBookingModal()">
+                                <i class="fas fa-plus"></i> Book Appointment
+                            </button>
+                        </div>
                     </div>
                     <div class="table-container">
                         <table>
@@ -112,18 +121,190 @@
                                 <input type="text" class="form-control" name="last_name" required>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label>Email Address</label>
-                            <input type="email" class="form-control" name="email" placeholder="patient@example.com"
-                                required>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Email Address</label>
+                                <input type="email" class="form-control" name="email" placeholder="patient@example.com"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label>Phone Number</label>
+                                <input type="tel" class="form-control" name="phone" required>
+                            </div>
                         </div>
-                        <button type="submit" class="btn btn-primary">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Date of Birth</label>
+                                <input type="date" class="form-control" name="date_of_birth" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Gender</label>
+                                <select class="form-control" name="gender" required>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Blood Group</label>
+                                <select class="form-control" name="blood_group">
+                                    <option value="">Select</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Address</label>
+                            <textarea class="form-control" name="address" rows="2"></textarea>
+                        </div>
+                        <hr>
+                        <h4>Insurance Details</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Insurance Provider</label>
+                                <input type="text" class="form-control" name="insurance_provider">
+                            </div>
+                            <div class="form-group">
+                                <label>Policy Number</label>
+                                <input type="text" class="form-control" name="insurance_policy_number">
+                            </div>
+                            <div class="form-group">
+                                <label>Expiry Date</label>
+                                <input type="date" class="form-control" name="insurance_expiry">
+                            </div>
+                        </div>
+                        <hr>
+                        <h4>Emergency Contact</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Contact Name</label>
+                                <input type="text" class="form-control" name="emergency_contact_name">
+                            </div>
+                            <div class="form-group">
+                                <label>Contact Phone</label>
+                                <input type="tel" class="form-control" name="emergency_contact">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="margin-top: 20px;">
                             <i class="fas fa-save"></i> Register Patient
                         </button>
                     </form>
                 </div>
             </div>
+
+            <!-- Billing Tab -->
+            <div id="billingTab" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-file-invoice"></i> Create New Bill</h3>
+                    </div>
+                    <form id="createBillForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Patient ID</label>
+                                <input type="number" class="form-control" name="patient_id" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Bill Date</label>
+                                <input type="date" class="form-control" name="bill_date" required>
+                            </div>
+                        </div>
+                        <hr>
+                        <h4 style="margin-bottom: 16px;">Bill Items</h4>
+                        <div id="billItems">
+                            <div class="bill-item"
+                                style="border: 1px solid var(--border); padding: 16px; margin-bottom: 12px; border-radius: 8px; background: var(--bg-light);">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Item Description</label>
+                                        <input type="text" class="form-control item-description"
+                                            placeholder="E.g., Consultation Fee" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Amount (₹)</label>
+                                        <input type="number" class="form-control item-amount" step="0.01"
+                                            placeholder="0.00" required>
+                                    </div>
+                                    <div style="align-self: end;">
+                                        <button type="button" class="btn btn-danger btn-sm"
+                                            onclick="removeBillItem(this)" style="margin-bottom: 8px;">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline" onclick="addBillItem()"
+                            style="margin-bottom: 20px;">
+                            <i class="fas fa-plus"></i> Add Line Item
+                        </button>
+                        <hr>
+                        <div class="form-row" style="margin-bottom: 20px;">
+                            <div class="form-group">
+                                <label>Discount (%)</label>
+                                <input type="number" class="form-control" name="discount_percentage" value="0"
+                                    step="0.01" min="0" max="100">
+                            </div>
+                            <div class="form-group">
+                                <label>Tax (%)</label>
+                                <input type="number" class="form-control" name="tax_percentage" value="0" step="0.01"
+                                    min="0">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Notes (Optional)</label>
+                            <textarea class="form-control" name="notes" rows="2"
+                                placeholder="Additional billing notes..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">
+                            <i class="fas fa-save"></i> Generate Bill
+                        </button>
+                    </form>
+                </div>
+            </div>
         </main>
+    </div>
+
+    <!-- Reschedule Modal -->
+    <div class="modal-overlay" id="rescheduleModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-clock"></i> Reschedule / Reroute</h3>
+                <button class="modal-close" onclick="closeModal('rescheduleModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="rescheduleForm">
+                    <input type="hidden" name="app_id" id="reschedule_app_id">
+                    <div class="form-group">
+                        <label>New Date</label>
+                        <input type="date" class="form-control" name="new_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>New Time</label>
+                        <input type="time" class="form-control" name="new_time" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Reroute to Doctor (Optional)</label>
+                        <select class="form-control" name="new_doctor_id" id="rescheduleDoctorSelect">
+                            <option value="">Keep Original Doctor</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('rescheduleModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="submitReschedule()">
+                    <i class="fas fa-save"></i> Update Appointment
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Booking Modal -->
@@ -169,7 +350,7 @@
         </div>
     </div>
 
-    <script src="../js/api.js"></script>
+    <script src="../js/api.js?v=20240122"></script>
     <script>
         const user = JSON.parse(localStorage.getItem('user') || '{}');
         if (!user.id || user.role !== 'receptionist') window.location.href = '../index.html';
@@ -199,31 +380,57 @@
         async function loadDoctors() {
             try {
                 const doctors = await api.getBranchDoctors();
-                document.getElementById('doctorSelect').innerHTML = doctors.map(d =>
+                const options = doctors.map(d =>
                     `<option value="${d.id}">Dr. ${d.first_name} ${d.last_name} (${d.specialization})</option>`
                 ).join('');
+                document.getElementById('doctorSelect').innerHTML = options;
+                document.getElementById('rescheduleDoctorSelect').innerHTML = '<option value="">Keep Original Doctor</option>' + options;
             } catch (error) {
                 console.error('Failed to load doctors:', error);
             }
         }
 
         async function loadAppointments() {
-            const date = new Date().toISOString().split('T')[0];
+            const dateInput = document.getElementById('appointmentDate');
+            if (!dateInput.value) {
+                dateInput.value = new Date().toISOString().split('T')[0];
+            }
+            const date = dateInput.value;
+
+            // Show loading state
+            document.getElementById('appointmentsTable').innerHTML = '<tr><td colspan="5" class="loading"><div class="spinner"></div></td></tr>';
+
             try {
                 const appointments = await api.getReceptionistAppointments(date);
+                if (appointments.length === 0) {
+                    document.getElementById('appointmentsTable').innerHTML = '<tr><td colspan="5" class="empty-state">No appointments found for this date.</td></tr>';
+                    return;
+                }
+
                 document.getElementById('appointmentsTable').innerHTML = appointments.map(apt => `
                     <tr>
                         <td><i class="far fa-clock"></i> ${apt.appointment_time}</td>
                         <td><strong>${apt.patient_name}</strong></td>
                         <td>Dr. ${apt.doctor_name}</td>
-                        <td><span class="badge badge-info">${apt.status}</span></td>
+                        <td><span class="badge ${getStatusBadgeClass(apt.status)}">${apt.status}</span></td>
                         <td>
-                            <button class="btn btn-outline btn-sm" onclick="reschedule(${apt.id})">Reschedule</button>
+                            ${apt.status === 'scheduled' ? `<button class="btn btn-success btn-sm" onclick="confirmApp(${apt.id})">Confirm</button>` : ''}
+                            <button class="btn btn-outline btn-sm" onclick="showRescheduleModal(${apt.id})">Reroute / Reschedule</button>
                         </td>
                     </tr>
                 `).join('');
             } catch (error) {
                 document.getElementById('appointmentsTable').innerHTML = `<tr><td colspan="5" class="alert alert-danger">${error.message}</td></tr>`;
+            }
+        }
+
+        function getStatusBadgeClass(status) {
+            switch (status) {
+                case 'scheduled': return 'badge-warning';
+                case 'accepted': return 'badge-success';
+                case 'completed': return 'badge-info';
+                case 'cancelled': return 'badge-danger';
+                default: return 'badge-secondary';
             }
         }
 
@@ -274,6 +481,132 @@
                 e.target.reset();
             } catch (error) {
                 alert(error.message);
+            }
+        });
+
+        async function confirmApp(id) {
+            try {
+                await api.confirmAppointment(id);
+                loadAppointments();
+                alert('Appointment confirmed!');
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        async function showRescheduleModal(id) {
+            await loadDoctors();
+            document.getElementById('reschedule_app_id').value = id;
+            document.getElementById('rescheduleModal').classList.add('active');
+        }
+
+        async function submitReschedule() {
+            const id = document.getElementById('reschedule_app_id').value;
+            const form = document.getElementById('rescheduleForm');
+            const data = Object.fromEntries(new FormData(form).entries());
+            if (!data.new_doctor_id) delete data.new_doctor_id;
+
+            try {
+                await api.rescheduleAppointment(id, data);
+                closeModal('rescheduleModal');
+                loadAppointments();
+                alert('Appointment updated successfully!');
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        // Billing functions
+        function addBillItem() {
+            const container = document.getElementById('billItems');
+            const newItem = document.createElement('div');
+            newItem.className = 'bill-item';
+            newItem.style.cssText = 'border: 1px solid var(--border); padding: 16px; margin-bottom: 12px; border-radius: 8px; background: var(--bg-light);';
+            newItem.innerHTML = `
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Item Description</label>
+                        <input type="text" class="form-control item-description" placeholder="E.g., Consultation Fee" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Amount (₹)</label>
+                        <input type="number" class="form-control item-amount" step="0.01" placeholder="0.00" required>
+                    </div>
+                    <div style="align-self: end;">
+                        <button type="button" class="btn btn-danger btn-sm" onclick="removeBillItem(this)" style="margin-bottom: 8px;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(newItem);
+        }
+
+        function removeBillItem(button) {
+            const billItems = document.getElementById('billItems');
+            if (billItems.children.length > 1) {
+                button.closest('.bill-item').remove();
+            } else {
+                alert('At least one bill item is required');
+            }
+        }
+
+        document.getElementById('createBillForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+
+            // Collect all bill items
+            const items = [];
+            const billItemElements = document.querySelectorAll('.bill-item');
+            billItemElements.forEach(item => {
+                const description = item.querySelector('.item-description').value;
+                const amount = parseFloat(item.querySelector('.item-amount').value);
+                if (description && amount) {
+                    items.push({ description, amount });
+                }
+            });
+
+            if (items.length === 0) {
+                alert('Please add at least one bill item');
+                return;
+            }
+
+            const billData = {
+                patient_id: parseInt(formData.get('patient_id')),
+                bill_date: formData.get('bill_date'),
+                items: items,
+                discount_percentage: parseFloat(formData.get('discount_percentage')) || 0,
+                tax_percentage: parseFloat(formData.get('tax_percentage')) || 0,
+                notes: formData.get('notes') || ''
+            };
+
+            try {
+                const result = await api.createBill(billData);
+                alert(`Bill created successfully! Bill Number: ${result.bill_number}`);
+                form.reset();
+                // Reset bill items to just one
+                document.getElementById('billItems').innerHTML = `
+                    <div class="bill-item" style="border: 1px solid var(--border); padding: 16px; margin-bottom: 12px; border-radius: 8px; background: var(--bg-light);">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Item Description</label>
+                                <input type="text" class="form-control item-description" placeholder="E.g., Consultation Fee" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Amount (₹)</label>
+                                <input type="number" class="form-control item-amount" step="0.01" placeholder="0.00" required>
+                            </div>
+                            <div style="align-self: end;">
+                                <button type="button" class="btn btn-danger btn-sm" onclick="removeBillItem(this)" style="margin-bottom: 8px;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                alert(`Error creating bill: ${error.message}`);
             }
         });
 

@@ -4,6 +4,7 @@ Appointment Schemas
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import date, time, datetime
+from schemas.clinical import TelemetryResponse
 
 
 class AppointmentBase(BaseModel):
@@ -56,6 +57,7 @@ class AppointmentDetailResponse(AppointmentResponse):
     diagnosis: Optional[str]
     prescription: Optional[str]
     verdict: Optional[str]
+    telemetry: List[TelemetryResponse] = []
 
 
 class DoctorNotesUpdate(BaseModel):

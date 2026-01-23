@@ -27,6 +27,9 @@
                 <a href="#" data-tab="alerts">
                     <i class="fas fa-bell"></i> Active Alerts
                 </a>
+                <a href="#" data-tab="discharge">
+                    <i class="fas fa-procedures"></i> Discharge Requests
+                </a>
             </nav>
         </aside>
 
@@ -57,8 +60,9 @@
                                 <tr>
                                     <th>Room #</th>
                                     <th>Type</th>
-                                    <th>Capacity</th>
                                     <th>Status</th>
+                                    <th>Occupant</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody id="wardsTable"></tbody>
@@ -97,13 +101,53 @@
                 </div>
             </div>
 
-            <!-- Alerts Tab (Placeholder) -->
+            <!-- Alerts Tab -->
             <div id="alertsTab" class="tab-content">
                 <div class="card">
-                    <div class="empty-state">
-                        <i class="fas fa-check-circle" style="color: var(--success);"></i>
-                        <h3>All Systems Normal</h3>
-                        <p>No active telemetry alerts at this time.</p>
+                    <div class="card-header">
+                        <h3><i class="fas fa-bell"></i> Critical Alerts Log</h3>
+                        <button class="btn btn-outline btn-sm" onclick="loadAlerts()">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Patient</th>
+                                    <th>Alert Message</th>
+                                    <th>Vitals</th>
+                                </tr>
+                            </thead>
+                            <tbody id="alertsTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Discharge Tab -->
+            <div id="dischargeTab" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-hospital-user"></i> Admitted Patients - Discharge Requests</h3>
+                        <button class="btn btn-outline btn-sm" onclick="loadAdmittedPatients()">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Room</th>
+                                    <th>Patient</th>
+                                    <th>Admitted On</th>
+                                    <th>Admission Type</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admittedPatientsTable"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -167,7 +211,67 @@
         </div>
     </div>
 
-    <script src="../js/api.js"></script>
+    <!-- Live Monitor Modal -->
+    <div class="modal-overlay" id="monitorModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header" style="background: #0f172a; color: white;">
+                <h3><i class="fas fa-heartbeat" style="color: #ef4444;"></i> Live Patient Monitor</h3>
+                <button class="modal-close" onclick="stopMonitoring()" style="color: white;">&times;</button>
+            </div>
+            <div class="modal-body" style="background: #0f172a; color: #e2e8f0;">
+                <div class="monitor-header" style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                    <div>
+                        <h2 id="mon_patient_name" style="color: white; margin: 0;">Patient Name</h2>
+                        <small id="mon_room_number" style="color: #94a3b8;">Room 101</small>
+                    </div>
+                    <div>
+                        <span class="badge badge-success">LIVE</span>
+                    </div>
+                </div>
+
+                <div class="monitor-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="monitor-card"
+                        style="background: #1e293b; padding: 20px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 0.9rem; color: #94a3b8; text-transform: uppercase;">Heart Rate</div>
+                        <div class="value" id="live_hr" style="font-size: 3rem; font-weight: 700; color: #10b981;">--
+                        </div>
+                        <div style="font-size: 0.8rem;">bpm</div>
+                    </div>
+                    <div class="monitor-card"
+                        style="background: #1e293b; padding: 20px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 0.9rem; color: #94a3b8; text-transform: uppercase;">SpO2</div>
+                        <div class="value" id="live_spo2" style="font-size: 3rem; font-weight: 700; color: #3b82f6;">--
+                        </div>
+                        <div style="font-size: 0.8rem;">%</div>
+                    </div>
+                    <div class="monitor-card"
+                        style="background: #1e293b; padding: 20px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 0.9rem; color: #94a3b8; text-transform: uppercase;">BP (Sys/Dia)</div>
+                        <div class="value" id="live_bp" style="font-size: 2.5rem; font-weight: 700; color: #f59e0b;">
+                            --/--</div>
+                        <div style="font-size: 0.8rem;">mmHg</div>
+                    </div>
+                    <div class="monitor-card"
+                        style="background: #1e293b; padding: 20px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 0.9rem; color: #94a3b8; text-transform: uppercase;">Resp Rate</div>
+                        <div class="value" id="live_rr" style="font-size: 3rem; font-weight: 700; color: #8b5cf6;">--
+                        </div>
+                        <div style="font-size: 0.8rem;">/min</div>
+                    </div>
+                </div>
+
+                <div id="alert_banner"
+                    style="margin-top: 20px; padding: 12px; background: #ef4444; color: white; border-radius: 8px; display: none; text-align: center; animation: pulse 1s infinite;">
+                    <i class="fas fa-exclamation-triangle"></i> CRITICAL ALERT: Vitals Unstable!
+                </div>
+            </div>
+            <div class="modal-footer" style="background: #1e293b; border-color: #334155;">
+                <button class="btn btn-danger" onclick="stopMonitoring()">Stop Monitoring</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/api.js?v=2"></script>
     <script>
         const user = JSON.parse(localStorage.getItem('user') || '{}');
         if (!user.id || user.role !== 'nurse') window.location.href = '../index.html';
@@ -195,6 +299,8 @@
 
                 if (tab === 'wards') loadWards();
                 if (tab === 'telemetry') loadAppointments();
+                if (tab === 'alerts') loadAlerts();
+                if (tab === 'discharge') loadAdmittedPatients();
             });
         });
 
@@ -205,13 +311,126 @@
                     <tr>
                         <td><strong>${r.room_number}</strong></td>
                         <td>${r.room_type}</td>
-                        <td>${r.capacity}</td>
-                        <td><span class="badge ${r.is_available ? 'badge-success' : 'badge-danger'}">${r.is_available ? 'Available' : 'Full'}</span></td>
+                        <td><span class="badge ${r.is_available ? 'badge-success' : 'badge-danger'}">${r.is_available ? 'Available' : 'Occupied'}</span></td>
+                        <td>${r.occupant_name || '-'}</td>
+                        <td>
+                            ${!r.is_available && r.occupant_name ?
+                        `<button class="btn btn-outline btn-sm" onclick="startMonitoring('${r.occupant_name}', '${r.room_number}', ${r.appointment_id})"><i class="fas fa-heartbeat"></i> Monitor Live</button>`
+                        : '-'}
+                        </td>
                     </tr>
                 `).join('');
             } catch (e) {
                 console.error(e);
-                document.getElementById('wardsTable').innerHTML = `<tr><td colspan="4" class="alert alert-danger">${e.message}</td></tr>`;
+                document.getElementById('wardsTable').innerHTML = `<tr><td colspan="5" class="alert alert-danger">${e.message}</td></tr>`;
+            }
+        }
+
+        let monitorInterval;
+        let currentAppointmentId;
+        let activeAlert = false;
+
+        function startMonitoring(name, room, appointmentId) {
+            document.getElementById('mon_patient_name').textContent = name;
+            document.getElementById('mon_room_number').textContent = `Room ${room}`;
+            document.getElementById('monitorModal').classList.add('active');
+            currentAppointmentId = appointmentId;
+            activeAlert = false;
+
+            // Start simulation
+            monitorInterval = setInterval(() => updateVitals(appointmentId), 2000);
+        }
+
+        function stopMonitoring() {
+            clearInterval(monitorInterval);
+            document.getElementById('monitorModal').classList.remove('active');
+            document.getElementById('alert_banner').style.display = 'none';
+        }
+
+        async function updateVitals(appointmentId) {
+            // 50% risk calculation
+            const isCritical = Math.random() < 0.5;
+
+            let hr, spo2, sys, dia, rr;
+
+            if (isCritical) {
+                // Generate UNSTABLE values
+                hr = Math.random() > 0.5 ? 145 + Math.floor(Math.random() * 20) : 40 + Math.floor(Math.random() * 5);
+                spo2 = 80 + Math.floor(Math.random() * 8); // Hypoxia
+                sys = 170 + Math.floor(Math.random() * 20); // Hypertensive
+                dia = 100 + Math.floor(Math.random() * 10);
+                rr = 35 + Math.floor(Math.random() * 10); // Tachypnea
+
+                document.getElementById('alert_banner').style.display = 'block';
+
+                if (!activeAlert) {
+                    activeAlert = true;
+                    // Log to backend
+                    try {
+                        await api.addTelemetry({
+                            appointment_id: appointmentId,
+                            heart_rate: hr,
+                            oxygen_saturation: spo2,
+                            blood_pressure_systolic: sys,
+                            blood_pressure_diastolic: dia,
+                            temperature: 38.5,
+                            respiratory_rate: rr,
+                            is_icu_patient: true
+                        });
+
+                        // Refresh alerts tab if it's open
+                        if (document.getElementById('alertsTab').classList.contains('active')) {
+                            loadAlerts();
+                        }
+                    } catch (e) { console.error(e); }
+                }
+            } else {
+                // Generate STABLE values
+                hr = 70 + Math.floor(Math.random() * 20);
+                spo2 = 96 + Math.floor(Math.random() * 3);
+                sys = 115 + Math.floor(Math.random() * 15);
+                dia = 75 + Math.floor(Math.random() * 10);
+                rr = 16 + Math.floor(Math.random() * 4);
+
+                document.getElementById('alert_banner').style.display = 'none';
+                activeAlert = false;
+            }
+
+            // Update DOM
+            document.getElementById('live_hr').textContent = hr;
+            document.getElementById('live_spo2').textContent = spo2;
+            document.getElementById('live_bp').textContent = `${sys}/${dia}`;
+            document.getElementById('live_rr').textContent = rr;
+
+            // Color coding
+            document.getElementById('live_hr').style.color = (hr > 120 || hr < 50) ? '#ef4444' : '#10b981';
+            document.getElementById('live_spo2').style.color = (spo2 < 90) ? '#ef4444' : '#3b82f6';
+        }
+
+        async function loadAlerts() {
+            const tbody = document.getElementById('alertsTable');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="4" class="loading"><div class="spinner"></div></td></tr>';
+            try {
+                const response = await api.request('/nurse/telemetry/active-alerts');
+
+                if (!response || response.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No critical alerts recorded.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = response.map(alert => `
+                    <tr>
+                        <td>${new Date(alert.recorded_at).toLocaleTimeString()}</td>
+                        <td>${alert.appointment_id}</td> 
+                        <td style="color: var(--danger); font-weight: bold;">${alert.alert_message || 'Critical Vitals'}</td>
+                         <td>
+                            HR: ${alert.heart_rate}, SpO2: ${alert.oxygen_saturation}%
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="4" class="alert alert-danger">${e.message}</td></tr>`;
             }
         }
 
@@ -280,6 +499,49 @@
 
         function closeModal(id) {
             document.getElementById(id).classList.remove('active');
+        }
+
+        async function loadAdmittedPatients() {
+            const tbody = document.getElementById('admittedPatientsTable');
+            tbody.innerHTML = '<tr><td colspan="5" class="loading"><div class="spinner"></div></td></tr>';
+
+            try {
+                const admissions = await api.request('/nurse/admissions');
+                if (!admissions || admissions.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No admitted patients found.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = admissions.map(adm => `
+                    <tr>
+                        <td><strong>${adm.room_number || 'N/A'}</strong></td>
+                        <td>${adm.patient_name}</td>
+                        <td>${new Date(adm.admission_date).toLocaleDateString()}</td>
+                        <td><span class="badge ${adm.room_type === 'icu' ? 'badge-danger' : 'badge-info'}">${adm.room_type}</span></td>
+                        <td>
+                            ${adm.discharge_requested ?
+                        '<span class="badge badge-warning">Discharge Pending</span>' :
+                        `<button class="btn btn-primary btn-sm" onclick="requestDischarge(${adm.id})"><i class="fas fa-sign-out-alt"></i> Request Discharge</button>`
+                    }
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="5" class="alert alert-danger">${error.message}</td></tr>`;
+            }
+        }
+
+        async function requestDischarge(admissionId) {
+            const notes = prompt('Enter discharge notes (optional):');
+            if (notes === null) return; // User cancelled
+
+            try {
+                await api.requestDischarge(admissionId, notes || '');
+                alert('Discharge request sent to doctor for approval');
+                loadAdmittedPatients();
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
         }
 
         function logout() { localStorage.clear(); window.location.href = '../index.html'; }

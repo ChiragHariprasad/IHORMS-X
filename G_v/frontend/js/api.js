@@ -194,9 +194,23 @@ class ApiClient {
         return this.request('/org-admin/analytics');
     }
 
+    async toggleStaffAccess(userId) {
+        return this.request(`/org-admin/staff/${userId}/toggle`, {
+            method: 'POST'
+        });
+    }
+
+    async getBillingAnalytics(months = 6) {
+        return this.request(`/org-admin/billing-analytics?months=${months}`);
+    }
+
     // ==================== Doctor ====================
     async getDoctorAppointments() {
         return this.request('/doctor/appointments');
+    }
+
+    async getAppointmentDetail(id) {
+        return this.request(`/doctor/appointments/${id}`);
     }
 
     async getDoctorSchedule(date) {
@@ -222,6 +236,59 @@ class ApiClient {
 
     async getPatientHistory(patientId) {
         return this.request(`/doctor/patients/${patientId}/history`);
+    }
+
+    async admitPatient(appointmentId, roomType) {
+        return this.request(`/doctor/appointments/${appointmentId}/admit?room_type=${roomType}`, {
+            method: 'POST'
+        });
+    }
+
+    // ==================== Branch Admin ====================
+    async getBranchAnalytics() {
+        return this.request('/branch-admin/analytics');
+    }
+
+    async getBranchStaff() {
+        return this.request('/branch-admin/staff');
+    }
+
+    async createBranchDoctor(data) {
+        return this.request('/branch-admin/doctors', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async createBranchNurse(data) {
+        return this.request('/branch-admin/nurses', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async createBranchReceptionist(data) {
+        return this.request('/branch-admin/receptionists', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async createBranchPharmacy(data) {
+        return this.request('/branch-admin/pharmacy', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async disableStaff(userId) {
+        return this.request(`/branch-admin/staff/${userId}/disable`, {
+            method: 'POST'
+        });
+    }
+
+    async getDoctorAccessLogs() {
+        return this.request('/branch-admin/access-logs');
     }
 
     // ==================== Nurse ====================
@@ -266,6 +333,12 @@ class ApiClient {
         });
     }
 
+    async confirmAppointment(appointmentId) {
+        return this.request(`/receptionist/appointments/${appointmentId}/confirm`, {
+            method: 'POST'
+        });
+    }
+
     async getReceptionistAppointments(date = null, status = null) {
         let url = '/receptionist/appointments?';
         if (date) url += `date=${date}&`;
@@ -275,6 +348,10 @@ class ApiClient {
 
     async getBranchDoctors() {
         return this.request('/receptionist/doctors');
+    }
+
+    async getRecommendedDoctors(symptoms) {
+        return this.request(`/receptionist/doctors/recommend?symptoms=${encodeURIComponent(symptoms)}`);
     }
 
     // ==================== Pharmacy ====================
@@ -297,6 +374,10 @@ class ApiClient {
         return this.request(`/pharmacy/orders/${orderId}/fulfill`, {
             method: 'POST'
         });
+    }
+
+    async getPharmaInsights() {
+        return this.request('/pharmacy/insights');
     }
 
     // ==================== Patient Portal ====================
@@ -322,6 +403,46 @@ class ApiClient {
 
     async getAvailableDoctors() {
         return this.request('/patient-portal/doctors');
+    }
+
+    async getRecommendedDoctorsForSymptoms(symptoms) {
+        return this.request(`/patient-portal/doctors/recommend?symptoms=${encodeURIComponent(symptoms)}`);
+    }
+
+    // ==================== Billing ====================
+    async getMyBills() {
+        return this.request('/billing/my-bills');
+    }
+
+    async payBill(billingId, paymentMethod) {
+        return this.request(`/billing/my-bills/${billingId}/pay?payment_method=${paymentMethod}`, {
+            method: 'POST'
+        });
+    }
+
+    async claimInsurance(billingId, insuranceProvider, policyNumber) {
+        return this.request(`/billing/my-bills/${billingId}/insurance?insurance_provider=${insuranceProvider}&policy_number=${policyNumber}`, {
+            method: 'POST'
+        });
+    }
+
+    async createBill(data) {
+        return this.request('/billing/', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async requestDischarge(admissionId, notes) {
+        return this.request(`/billing/discharge/request?admission_id=${admissionId}&discharge_notes=${notes}`, {
+            method: 'POST'
+        });
+    }
+
+    async approveDischarge(admissionId, approved, summary) {
+        return this.request(`/billing/discharge/approve/${admissionId}?approved=${approved}&discharge_summary=${summary}`, {
+            method: 'POST'
+        });
     }
 }
 

@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="12" time="0.910" timestamp="2026-01-23T04:19:17.671851+05:30" hostname="Monster"><testcase classname="tests.functional.test_clinical_ops" name="test_nurse_telemetry_recording" time="0.169"><failure message="sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) NOT NULL constraint failed: users.first_name&#10;[SQL: INSERT INTO users (id, organization_id, branch_id, role, email, password_hash, first_name, last_name, phone, date_of_birth, gender, is_active, is_deleted, last_login, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]&#10;[parameters: (22, None, 1, 'DOCTOR', 'd2@care.com', 'x', None, None, None, None, None, 1, 0, None, '2026-01-22 22:49:17.881772', '2026-01-22 22:49:17.881774')]&#10;(Background on this error at: https://sqlalche.me/e/20/gkpj)">self = &lt;sqlalchemy.engine.base.Connection object at 0x0000012C3F79EAD0&gt;
+dialect = &lt;sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x0000012C3E34F380&gt;
+context = &lt;sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x0000012C3FA47C50&gt;
+statement = &lt;sqlalchemy.dialects.sqlite.base.SQLiteCompiler object at 0x0000012C3F9B4550&gt;
+parameters = [(22, None, 1, 'DOCTOR', 'd2@care.com', 'x', ...)]
+
+    def _exec_single_context(
+        self,
+        dialect: Dialect,
+        context: ExecutionContext,
+        statement: Union[str, Compiled],
+        parameters: Optional[_AnyMultiExecuteParams],
+    ) -&gt; CursorResult[Any]:
+        """continue the _execute_context() method for a single DBAPI
+        cursor.execute() or cursor.executemany() call.
+    
+        """
+        if dialect.bind_typing is BindTyping.SETINPUTSIZES:
+            generic_setinputsizes = context._prepare_set_input_sizes()
+    
+            if generic_setinputsizes:
+                try:
+                    dialect.do_set_input_sizes(
+                        context.cursor, generic_setinputsizes, context
+                    )
+                except BaseException as e:
+                    self._handle_dbapi_exception(
+                        e, str(statement), parameters, None, context
+                    )
+    
+        cursor, str_statement, parameters = (
+            context.cursor,
+            context.statement,
+            context.parameters,
+        )
+    
+        effective_parameters: Optional[_AnyExecuteParams]
+    
+        if not context.executemany:
+            effective_parameters = parameters[0]
+        else:
+            effective_parameters = parameters
+    
+        if self._has_events or self.engine._has_events:
+            for fn in self.dispatch.before_cursor_execute:
+                str_statement, effective_parameters = fn(
+                    self,
+                    cursor,
+                    str_statement,
+                    effective_parameters,
+                    context,
+                    context.executemany,
+                )
+    
+        if self._echo:
+            self._log_info(str_statement)
+    
+            stats = context._get_cache_stats()
+    
+            if not self.engine.hide_parameters:
+                self._log_info(
+                    "[%s] %r",
+                    stats,
+                    sql_util._repr_params(
+                        effective_parameters,
+                        batches=10,
+                        ismulti=context.executemany,
+                    ),
+                )
+            else:
+                self._log_info(
+                    "[%s] [SQL parameters hidden due to hide_parameters=True]",
+                    stats,
+                )
+    
+        evt_handled: bool = False
+        try:
+            if context.execute_style is ExecuteStyle.EXECUTEMANY:
+                effective_parameters = cast(
+                    "_CoreMultiExecuteParams", effective_parameters
+                )
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_executemany:
+                        if fn(
+                            cursor,
+                            str_statement,
+                            effective_parameters,
+                            context,
+                        ):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_executemany(
+                        cursor,
+                        str_statement,
+                        effective_parameters,
+                        context,
+                    )
+            elif not effective_parameters and context.no_parameters:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute_no_params:
+                        if fn(cursor, str_statement, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute_no_params(
+                        cursor, str_statement, context
+                    )
+            else:
+                effective_parameters = cast(
+                    "_CoreSingleExecuteParams", effective_parameters
+                )
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute:
+                        if fn(
+                            cursor,
+                            str_statement,
+                            effective_parameters,
+                            context,
+                        ):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+&gt;                   self.dialect.do_execute(
+                        cursor, str_statement, effective_parameters, context
+                    )
+
+C:\Users\chira\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\engine\base.py:1967: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x0000012C3E34F380&gt;
+cursor = &lt;sqlite3.Cursor object at 0x0000012C3FA796C0&gt;
+statement = 'INSERT INTO users (id, organization_id, branch_id, role, email, password_hash, first_name, last_name, phone, date_of_...er, is_active, is_deleted, last_login, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+parameters = (22, None, 1, 'DOCTOR', 'd2@care.com', 'x', ...)
+context = &lt;sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x0000012C3FA47C50&gt;
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+&gt;       cursor.execute(statement, parameters)
+E       sqlite3.IntegrityError: NOT NULL constraint failed: users.first_name
+
+C:\Users\chira\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\engine\default.py:952: IntegrityError
+
+The above exception was the direct cause of the following exception:
+
+client = &lt;starlette.testclient.TestClient object at 0x0000012C3F82DE80&gt;
+db = &lt;sqlalchemy.orm.session.Session object at 0x0000012C3F82DA90&gt;
+
+    def test_nurse_telemetry_recording(client, db):
+        # Setup branch and nurse
+        org = Organization(name="Care Org")
+        db.add(org)
+        db.flush()
+        branch = Branch(organization_id=org.id, name="B1", city="Pune")
+        db.add(branch)
+        db.flush()
+    
+        nurse_user = User(id=20, email="nurse@care.com", role=UserRole.NURSE, branch_id=branch.id, password_hash="x", is_active=True, first_name="N", last_name="C")
+        db.add(nurse_user)
+        db.flush()
+        nurse = Nurse(user_id=20, qualification="RN", license_number="L001")
+        db.add(nurse)
+        db.flush()
+    
+        # Setup patient and appointment
+        pat_user = User(id=21, email="p2@care.com", role=UserRole.PATIENT, branch_id=branch.id, password_hash="x", first_name="P", last_name="T")
+        db.add(pat_user)
+        db.flush()
+        patient = Patient(user_id=21, organization_id=org.id, branch_id=branch.id, patient_uid="P001")
+        db.add(patient)
+        db.flush()
+    
+        doc_user = User(id=22, email="d2@care.com", role=UserRole.DOCTOR, branch_id=branch.id, password_hash="x")
+        db.add(doc_user)
+&gt;       db.flush()
+
+tests\functional\test_clinical_ops.py:35: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+C:\Users\chira\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\orm\session.py:4331: in flush
+    self._flush(objects)
+C:\Users\chira\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\orm\session.py:4466: in _flush
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+C:\Users\chira\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\util\langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+C:\Users\chira\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\orm\session.py:4427: in _flush
+    flush_context.execute()
+C:\Users\chira\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\orm\unitofwork.py:466: in execute
+    rec.execute(self)
+C:\Users\chira\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\orm\unitofwork.py:642: in execute
+    util.preloaded.orm_persistence.save_obj(
+C:\Users\chira\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\orm\persistence.py:93: in save_obj
+    _emit_insert_statements(
+C:\Users\chira\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\orm\persistence.py:1048: in _emit_insert_statements
+    result = connection.execute(
+C:\Users\chira\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\engine\base.py:1419: in execute
+    return meth(
+C:\Users\chira\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\sql\elements.py:527: in _execute_on_connection
+    return connection._execute_clauseelement(
+C:\Users\chira\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\engine\base.py:1641: in _execute_clauseelement
+    ret = self._execute_context(
+C:\Users\chira\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\engine\base.py:1846: in _execute_context
+    return self._exec_single_context(
+C:\Users\chira\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\engine\base.py:1986: in _exec_single_context
+    self._handle_dbapi_exception(
+C:\Users\chira\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\engine\base.py:2363: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+C:\Users\chira\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\engine\base.py:1967: in _exec_single_context
+    self.dialect.do_execute(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x0000012C3E34F380&gt;
+cursor = &lt;sqlite3.Cursor object at 0x0000012C3FA796C0&gt;
+statement = 'INSERT INTO users (id, organization_id, branch_id, role, email, password_hash, first_name, last_name, phone, date_of_...er, is_active, is_deleted, last_login, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+parameters = (22, None, 1, 'DOCTOR', 'd2@care.com', 'x', ...)
+context = &lt;sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x0000012C3FA47C50&gt;
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+&gt;       cursor.execute(statement, parameters)
+E       sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) NOT NULL constraint failed: users.first_name
+E       [SQL: INSERT INTO users (id, organization_id, branch_id, role, email, password_hash, first_name, last_name, phone, date_of_birth, gender, is_active, is_deleted, last_login, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+E       [parameters: (22, None, 1, 'DOCTOR', 'd2@care.com', 'x', None, None, None, None, None, 1, 0, None, '2026-01-22 22:49:17.881772', '2026-01-22 22:49:17.881774')]
+E       (Background on this error at: https://sqlalche.me/e/20/gkpj)
+
+C:\Users\chira\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\engine\default.py:952: IntegrityError</failure></testcase><testcase classname="tests.functional.test_clinical_ops" name="test_pharmacy_inventory_management" time="0.038" /><testcase classname="tests.functional.test_security" name="test_unauthorized_access_to_patient_data" time="0.011" /><testcase classname="tests.functional.test_security" name="test_org_admin_cannot_view_clinical_data" time="0.010" /><testcase classname="tests.functional.test_security" name="test_super_admin_unauthorized_for_clinical" time="0.008" /><testcase classname="tests.functional.test_super_admin" name="test_login_success" time="0.014" /><testcase classname="tests.functional.test_super_admin" name="test_create_organization_auth" time="0.004" /><testcase classname="tests.functional.test_super_admin" name="test_super_admin_create_org" time="0.012" /><testcase classname="tests.integration.test_clinical_flow" name="test_full_clinical_workflow" time="0.046"><failure message="KeyError: 'status'">client = &lt;starlette.testclient.TestClient object at 0x0000012C3F8D16A0&gt;
+db = &lt;sqlalchemy.orm.session.Session object at 0x0000012C3F9B5950&gt;
+
+    def test_full_clinical_workflow(client, db):
+        # 1. Setup Environment (Org, Branch, Staff)
+        org = Organization(name="Apollo Integration")
+        db.add(org)
+        db.flush()
+        branch = Branch(organization_id=org.id, name="Main Branch", city="Mumbai")
+        db.add(branch)
+        db.flush()
+    
+        # Staff Users
+        rec_user = User(id=10, email="rec@ap.com", role=UserRole.RECEPTIONIST, organization_id=org.id, branch_id=branch.id, password_hash="x", is_active=True, first_name="R", last_name="S")
+        doc_user = User(id=11, email="doc@ap.com", role=UserRole.DOCTOR, organization_id=org.id, branch_id=branch.id, password_hash="x", is_active=True, first_name="D", last_name="M")
+        db.add_all([rec_user, doc_user])
+        db.flush()
+    
+        doctor = Doctor(user_id=11, specialization="General", qualification="MD", license_number="DOC001")
+        db.add(doctor)
+        db.commit()
+    
+        rec_token = jwt_handler.create_access_token({"sub": "10", "role": "receptionist"})
+        doc_token = jwt_handler.create_access_token({"sub": "11", "role": "doctor"})
+    
+        # 2. Receptionist registers patient
+        reg_response = client.post(
+            "/receptionist/patients",
+            json={
+                "email": "p1@gmail.com",
+                "first_name": "Patient",
+                "last_name": "One",
+                "phone": "9999999999",
+                "blood_group": "A+",
+                "address": "Mumbai Street"
+            },
+            headers={"Authorization": f"Bearer {rec_token}"}
+        )
+        assert reg_response.status_code == 200
+        patient_id = reg_response.json()["id"]
+    
+        # 3. Receptionist books appointment
+        app_response = client.post(
+            "/receptionist/appointments",
+            json={
+                "patient_id": patient_id,
+                "doctor_id": doctor.id,
+                "appointment_date": str(date.today()),
+                "appointment_time": "10:30",
+                "chief_complaint": "Persistent Headache"
+            },
+            headers={"Authorization": f"Bearer {rec_token}"}
+        )
+        assert app_response.status_code == 200
+        app_id = app_response.json()["id"]
+    
+        # 4. Doctor accepts appointment
+        accept_response = client.post(
+            f"/doctor/appointments/{app_id}/accept",
+            headers={"Authorization": f"Bearer {doc_token}"}
+        )
+        assert accept_response.status_code == 200
+    
+        # 5. Doctor adds notes and completes visit
+        notes_response = client.post(
+            f"/doctor/appointments/{app_id}/notes",
+            json={
+                "notes": "Patient is stressed.",
+                "diagnosis": "Tension Headache",
+                "prescription": "Rest and Paracetamol 500mg",
+                "verdict": "Return if pain persists"
+            },
+            headers={"Authorization": f"Bearer {doc_token}"}
+        )
+        assert notes_response.status_code == 200
+&gt;       assert notes_response.json()["status"] == "completed"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'status'
+
+tests\integration\test_clinical_flow.py:82: KeyError</failure></testcase><testcase classname="tests.unit.test_services" name="test_user_authentication" time="0.003" /><testcase classname="tests.unit.test_services" name="test_create_doctor" time="0.008" /><testcase classname="tests.unit.test_services" name="test_patient_registration" time="0.007" /></testsuite></testsuites>

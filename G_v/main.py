@@ -45,7 +45,7 @@ app.include_router(patient_portal.router)
 app.include_router(billing.router)
 
 @app.get("/")
-async def root():
+def root():
     return {
         "app": settings.APP_NAME,
         "version": settings.APP_VERSION,

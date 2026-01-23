@@ -1,0 +1,16 @@
+Test Class,Test Name,Status,Time (s),Message
+tests.functional.test_clinical_ops,test_nurse_telemetry_recording,FAILED,0.169,"sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) NOT NULL constraint failed: users.first_name
+[SQL: INSERT INTO users (id, organization_id, branch_id, role, email, password_hash, first_name, last_name, phone, date_of_birth, gender, is_active, is_deleted, last_login, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (22, None, 1, 'DOCTOR', 'd2@care.com', 'x', None, None, None, None, None, 1, 0, None, '2026-01-22 22:49:17.881772', '2026-01-22 22:49:17.881774')]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)"
+tests.functional.test_clinical_ops,test_pharmacy_inventory_management,PASSED,0.038,
+tests.functional.test_security,test_unauthorized_access_to_patient_data,PASSED,0.011,
+tests.functional.test_security,test_org_admin_cannot_view_clinical_data,PASSED,0.01,
+tests.functional.test_security,test_super_admin_unauthorized_for_clinical,PASSED,0.008,
+tests.functional.test_super_admin,test_login_success,PASSED,0.014,
+tests.functional.test_super_admin,test_create_organization_auth,PASSED,0.004,
+tests.functional.test_super_admin,test_super_admin_create_org,PASSED,0.012,
+tests.integration.test_clinical_flow,test_full_clinical_workflow,FAILED,0.046,KeyError: 'status'
+tests.unit.test_services,test_user_authentication,PASSED,0.003,
+tests.unit.test_services,test_create_doctor,PASSED,0.008,
+tests.unit.test_services,test_patient_registration,PASSED,0.007,

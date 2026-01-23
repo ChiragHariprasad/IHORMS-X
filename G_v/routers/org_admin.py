@@ -17,7 +17,7 @@ from auth.dependencies import get_org_admin
 router = APIRouter(prefix="/org-admin", tags=["Organization Admin"])
 
 @router.post("/branches", response_model=BranchResponse)
-async def create_branch(
+def create_branch(
     data: BranchCreate, 
     db: Session = Depends(get_db),
     admin: User = Depends(get_org_admin)
@@ -37,14 +37,14 @@ async def create_branch(
     return branch
 
 @router.get("/branches", response_model=List[BranchResponse])
-async def list_branches(
+def list_branches(
     db: Session = Depends(get_db),
     admin: User = Depends(get_org_admin)
 ):
     return db.query(Branch).filter(Branch.organization_id == admin.organization_id).all()
 
 @router.get("/staff")
-async def list_staff(
+def list_staff(
     page: int = 1,
     page_size: int = 20,
     db: Session = Depends(get_db),
@@ -59,7 +59,7 @@ async def list_staff(
     return {"items": users, "total": total}
 
 @router.post("/deans", response_model=UserResponse)
-async def add_dean(
+def add_dean(
     data: UserCreate, 
     branch_id: int,
     db: Session = Depends(get_db),
@@ -69,7 +69,7 @@ async def add_dean(
     return service.create_branch_admin(data, admin.organization_id, branch_id, admin.id)
 
 @router.get("/analytics", response_model=OrganizationAnalytics)
-async def get_org_stats(
+def get_org_stats(
     db: Session = Depends(get_db),
     admin: User = Depends(get_org_admin)
 ):
@@ -77,7 +77,7 @@ async def get_org_stats(
     return service.get_organization_analytics(admin.organization_id)
 
 @router.post("/staff/{user_id}/reset-password")
-async def reset_staff_password(
+def reset_staff_password(
     user_id: int, 
     db: Session = Depends(get_db),
     admin: User = Depends(get_org_admin)
@@ -91,7 +91,7 @@ async def reset_staff_password(
     return {"status": "success"}
 
 @router.post("/staff/{user_id}/toggle")
-async def toggle_staff_access(
+def toggle_staff_access(
     user_id: int, 
     db: Session = Depends(get_db),
     admin: User = Depends(get_org_admin)
@@ -106,3 +106,60 @@ async def toggle_staff_access(
     else:
         service.enable_user(user_id, admin.id)
     return {"status": "success", "is_active": not user.is_active}
+
+@router.get("/billing-analytics")
+def get_billing_analytics(
+    months: int = 6,
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_org_admin)
+):
+    """Get monthly billing aggregation for org admin dashboard"""
+    from models import Billing, Patient
+    from sqlalchemy import func, extract
+    from datetime import datetime, timedelta
+    from dateutil.relativedelta import relativedelta
+    
+    # Calculate date range
+    end_date = datetime.utcnow()
+    start_date = end_date - relativedelta(months=months)
+    
+    # Get all bills for the organization
+    bills_query = db.query(Billing).join(Patient).filter(
+        Patient.organization_id == admin.organization_id,
+        Billing.bill_date >= start_date
+    )
+    
+    all_bills = bills_query.all()
+    
+    # Calculate totals
+    total_revenue = sum(bill.total_amount for bill in all_bills)
+    total_bills = len(all_bills)
+    outstanding_amount = sum(bill.total_amount - bill.amount_paid for bill in all_bills)
+    average_bill = total_revenue / total_bills if total_bills > 0 else 0
+    
+    # Monthly aggregation
+    monthly_data = db.query(
+        func.to_char(Billing.bill_date, 'YYYY-MM').label('month'),
+        func.sum(Billing.total_amount).label('revenue'),
+        func.count(Billing.id).label('bill_count')
+    ).join(Patient).filter(
+        Patient.organization_id == admin.organization_id,
+        Billing.bill_date >= start_date
+    ).group_by(
+        func.to_char(Billing.bill_date, 'YYYY-MM')
+    ).order_by('month').all()
+    
+    return {
+        "total_revenue": float(total_revenue),
+        "total_bills": total_bills,
+        "average_bill": float(average_bill),
+        "outstanding_amount": float(outstanding_amount),
+        "monthly_data": [
+            {
+                "month": row.month,
+                "revenue": float(row.revenue),
+                "bill_count": int(row.bill_count)
+            }
+            for row in monthly_data
+        ]
+    }

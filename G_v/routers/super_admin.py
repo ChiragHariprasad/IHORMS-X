@@ -16,7 +16,7 @@ from utils.helpers import hash_password
 router = APIRouter(prefix="/super-admin", tags=["Super Admin"])
 
 @router.post("/organizations", response_model=OrganizationResponse)
-async def create_organization(
+def create_organization(
     data: OrganizationCreate, 
     db: Session = Depends(get_db),
     admin: User = Depends(get_super_admin)
@@ -50,14 +50,14 @@ async def create_organization(
     return org
 
 @router.get("/organizations", response_model=List[OrganizationResponse])
-async def list_organizations(
+def list_organizations(
     db: Session = Depends(get_db),
     admin: User = Depends(get_super_admin)
 ):
     return db.query(Organization).all()
 
 @router.get("/analytics", response_model=PlatformAnalytics)
-async def get_platform_stats(
+def get_platform_stats(
     db: Session = Depends(get_db),
     admin: User = Depends(get_super_admin)
 ):
@@ -65,7 +65,7 @@ async def get_platform_stats(
     return service.get_platform_analytics()
 
 @router.post("/organizations/{org_id}/toggle")
-async def toggle_organization(
+def toggle_organization(
     org_id: int, 
     db: Session = Depends(get_db),
     admin: User = Depends(get_super_admin)

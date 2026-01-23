@@ -17,7 +17,7 @@ from auth.dependencies import get_patient_user
 router = APIRouter(prefix="/patient-portal", tags=["Patient Portal"])
 
 @router.get("/profile")
-async def get_my_profile(
+def get_my_profile(
     db: Session = Depends(get_db),
     user: User = Depends(get_patient_user)
 ):
@@ -37,7 +37,7 @@ async def get_my_profile(
     }
 
 @router.get("/history")
-async def get_my_medical_history(
+def get_my_medical_history(
     db: Session = Depends(get_db),
     user: User = Depends(get_patient_user)
 ):
@@ -50,7 +50,7 @@ async def get_my_medical_history(
     return {"records": records}
 
 @router.get("/doctors")
-async def list_available_doctors(
+def list_available_doctors(
     db: Session = Depends(get_db),
     user: User = Depends(get_patient_user)
 ):
@@ -65,8 +65,33 @@ async def list_available_doctors(
         } for u, d in doctors
     ]
 
+@router.get("/doctors/recommend")
+def recommend_doctors_by_symptoms(
+    symptoms: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_patient_user)
+):
+    """Get AI-recommended doctors for patient symptoms"""
+    from services.doctor_recommendation_service import DoctorRecommendationService
+    ps = PatientService(db)
+    patient = ps.get_patient_by_user_id(user.id)
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+    
+    service = DoctorRecommendationService(db)
+    recommendations = service.recommend_doctors(symptoms, patient.branch_id, limit=10)
+    
+    return [
+        {
+            **doctor,
+            "confidence": round(score * 100, 1),
+            "recommended": score > 0.7
+        }
+        for doctor, score in recommendations
+    ]
+
 @router.get("/appointments", response_model=List[AppointmentResponse])
-async def list_my_appointments(
+def list_my_appointments(
     db: Session = Depends(get_db),
     user: User = Depends(get_patient_user)
 ):
@@ -80,7 +105,7 @@ async def list_my_appointments(
     return apps
 
 @router.post("/appointments/book")
-async def book_appointment(
+def book_appointment(
     doctor_id: int,
     appointment_date: date,
     appointment_time: time,
