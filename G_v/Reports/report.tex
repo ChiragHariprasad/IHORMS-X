@@ -7,18 +7,19 @@
 % ----- Packages -----
 \usepackage[
     margin=1in,
-    headheight=14pt,
-    headsep=10pt
+    headheight=20pt,
+    headsep=15pt
 ]{geometry}
 
-\usepackage{fontspec}
-\setmainfont[
-    Path = ./,
-    UprightFont = TIMES.TTF,
-    BoldFont = TIMESBD.TTF,
-    ItalicFont = TIMESI.TTF,
-    BoldItalicFont = TIMESBI.TTF
-]{Times New Roman}
+\usepackage{iftex}
+\ifPDFTeX
+    \usepackage[T1]{fontenc}
+    \usepackage[utf8]{inputenc}
+    \usepackage{times}
+\else
+    \usepackage{fontspec}
+    \setmainfont{Times New Roman}
+\fi
 
 \usepackage{graphicx}
 \usepackage{eso-pic}
@@ -26,7 +27,6 @@
 \usepackage{setspace}
 \usepackage{titlesec}
 \usepackage{tocloft}
-\usepackage{hyperref}
 \usepackage{tikz}
 \usetikzlibrary{shadows, shapes.geometric, arrows, positioning}
 \usepackage{float}
@@ -38,6 +38,7 @@
 \usepackage{everypage}
 \usepackage{longtable}
 \usepackage{listings}
+\usepackage[hidelinks]{hyperref}
 
 % ----- Watermark -----
 \SetWatermarkText{\includegraphics[width=8cm]{logo_forwatermark.png}}
@@ -81,7 +82,7 @@
 
 \renewcommand{\headrulewidth}{0pt}
 \renewcommand{\footrulewidth}{0pt}
-\setlength{\headheight}{14pt}
+\renewcommand{\footrulewidth}{0pt}
 
 \fancypagestyle{plain}{
     \fancyhf{}
@@ -91,7 +92,7 @@
     \fancyfoot[R]{\thepage\hspace*{-1.3cm}}
     \renewcommand{\headrulewidth}{0pt}
     \renewcommand{\footrulewidth}{0pt}
-    \setlength{\headheight}{14pt}
+    \renewcommand{\footrulewidth}{0pt}
 }
 
 % Page border on every page
@@ -122,7 +123,7 @@
 \centering
 \vspace*{0.25cm}
 
-{\fontsize{16}{18}\selectfont \textbf{RV COLLEGE OF ENGINEERING®}}\\[0.2cm]
+{\fontsize{16}{18}\selectfont \textbf{RV COLLEGE OF ENGINEERING\textregistered}}\\[0.2cm]
 {\fontsize{16}{18}\selectfont \textbf{BENGALURU--560059}}\\[0.15cm]
 {\fontsize{12}{14}\selectfont (Autonomous Institution Affiliated to VTU, Belagavi)}\\[0.8cm]
 
@@ -703,312 +704,212 @@ This diagram shows the financial workflow connecting clinical services to billin
 % ==================== CHAPTER 5: RELATIONAL SCHEMA ====================
 \chapter{RELATIONAL SCHEMA AND NORMALIZATION}
 
-This chapter presents the complete relational database schema implemented in PostgreSQL, detailing table structures, data types, constraints, indexes, and normalization achievements.
+This chapter presents the finalized PostgreSQL relational schema for IHORMS, designed to ensure strong data integrity, scalability, and multi-tenant isolation. The database is normalized up to Third Normal Form (3NF) to reduce redundancy, eliminate update anomalies, and maintain consistent clinical, operational, and financial workflows across organizations and branches.
 
-\section{Normalization Analysis}
+% ==================== RELATIONAL SCHEMA DIAGRAM ====================
+\section{Relational Schema Diagram}
 
-IHORMS implements Third Normal Form (3NF) across all tables, systematically eliminating redundancy and update anomalies through careful dependency analysis.
+The IHORMS relational schema defines the complete set of database entities and their relationships required to support hospital operations in a multi-tenant environment. It models organizational structure, user roles, clinical workflows, admissions, billing, telemetry monitoring, and pharmacy inventory using primary and foreign key constraints.
 
-\subsection{First Normal Form (1NF) - Atomicity}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{relationalschema.png}
+\caption{IHORMS Relational Schema (ER Diagram)}
+\label{fig:ihorms_relational_schema}
+\end{figure}
 
-Every table column contains atomic, indivisible values with no repeating groups or arrays:
+% ==================== NORMALIZATION SUMMARY (TABLE ONLY) ====================
+\section{Normalization Summary (1NF to 3NF)}
 
-\textbf{Users Table}: Each user record stores exactly one role rather than role arrays. Email addresses are single values, not comma-separated lists.
+\subsection{First Normal Form (1NF) --- Atomicity}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{3.2cm}|p{11.8cm}|}
+\hline
+\textbf{Rule} & \textbf{Implementation in IHORMS} \\ \hline
+Atomic values & Every attribute stores a single indivisible value (no arrays, lists, or repeating groups). \\ \hline
+No repeating groups & Multi-value clinical readings, admissions, appointments, and billing transactions are stored as separate rows in dedicated tables. \\ \hline
+Consistent row meaning & Each row represents one entity instance (one user, one appointment, one admission, one bill, one inventory batch). \\ \hline
+\end{tabular}
+\caption{1NF Compliance Summary}
+\end{table}
 
-\textbf{Appointments Table}: Each appointment represents a single patient-doctor encounter. Multiple vital sign readings are externalized to the TelemetryData table.
+\subsection{Second Normal Form (2NF) --- Full Dependency on Primary Key}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{4cm}|p{11cm}|}
+\hline
+\textbf{Rule} & \textbf{Implementation in IHORMS} \\ \hline
+No partial dependency & All non-key attributes depend fully on their table primary key. \\ \hline
+Separated professional details & Doctor-specific fields are stored in \texttt{doctors} and referenced through foreign keys from appointments and admissions. \\ \hline
+Independent resource metadata & Room details are stored in \texttt{rooms} and referenced only where required by workflow tables. \\ \hline
+Branch metadata isolation & Branch contact and location details remain in \texttt{branches} and are not duplicated across user or patient records. \\ \hline
+\end{tabular}
+\caption{2NF Compliance Summary}
+\end{table}
 
-\textbf{Billing Table}: Itemized charges are stored as separate numeric columns rather than embedded JSON arrays.
+\subsection{Third Normal Form (3NF) --- No Transitive Dependencies}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{4cm}|p{11cm}|}
+\hline
+\textbf{Rule} & \textbf{Implementation in IHORMS} \\ \hline
+No transitive dependency & No non-key attribute depends on another non-key attribute within the same relation. \\ \hline
+Organization data separation & Organization-level details are stored in \texttt{organizations}; branches reference organizations using \texttt{organization\_id}. \\ \hline
+Role-based entity separation & Common identity attributes remain in \texttt{users}, while role-specific details exist in \texttt{doctors} and \texttt{patients}. \\ \hline
+Explicit billing state & Billing totals and payment status are stored explicitly to ensure consistent reporting and payment tracking. \\ \hline
+\end{tabular}
+\caption{3NF Compliance Summary}
+\end{table}
 
-\textbf{Inventory Table}: Each medicine batch is a separate row with unique batch number and expiry date.
-
-\subsection{Second Normal Form (2NF) - Partial Dependency Elimination}
-
-All non-key attributes fully functionally depend on complete primary keys:
-
-\textbf{Medical License Storage}: Doctor license numbers are stored in the Doctor table where doctor\_id is the primary key, with Appointments referencing doctors through foreign key.
-
-\textbf{Room Details}: Room attributes depend on room\_id alone, not on which appointments are scheduled there.
-
-\textbf{Patient Insurance}: Insurance details depend on patient\_id, not on individual billing records.
-
-\textbf{Branch Location Data}: Branch addresses depend on branch\_id, not on which staff members work there.
-
-\subsection{Third Normal Form (3NF) - Transitive Dependency Elimination}
-
-No non-key attributes depend on other non-key attributes:
-
-\textbf{Organization Address Isolation}: Branch table contains only organization\_id reference. Organization addresses reside in the Organization table.
-
-\textbf{Doctor Specialization Independence}: Qualifications and practice specializations are treated as independent attributes.
-
-\textbf{Billing Payment Status}: Payment status is stored explicitly rather than computed from comparing amounts.
-
-\section{Complete Table Schemas}
+% ==================== NORMALIZED RELATIONAL SCHEMA (TABLES ONLY) ====================
+\section{Normalized Relational Schema (3NF)}
 
 \subsection{Core Multi-Tenant Tables}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{3cm}|p{2cm}|p{4.2cm}|p{6.8cm}|}
+\hline
+\textbf{Table} & \textbf{PK} & \textbf{Foreign Keys (FKs)} & \textbf{Major Attributes} \\ \hline
+organizations & id & -- &
+name (Unique), address, city, state, country, pincode, phone, email (Unique), is\_active, created\_at, updated\_at \\ \hline
 
-\textbf{organizations}
-\begin{lstlisting}[language=SQL]
-CREATE TABLE organizations (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL UNIQUE,
-    address TEXT,
-    city VARCHAR(50),
-    state VARCHAR(50),
-    country VARCHAR(50) DEFAULT 'India',
-    pincode VARCHAR(10),
-    phone VARCHAR(15),
-    email VARCHAR(100) UNIQUE,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-\end{lstlisting}
-
-\textbf{branches}
-\begin{lstlisting}[language=SQL]
-CREATE TABLE branches (
-    id SERIAL PRIMARY KEY,
-    organization_id INTEGER NOT NULL 
-        REFERENCES organizations(id),
-    name VARCHAR(100) NOT NULL,
-    address TEXT NOT NULL,
-    city VARCHAR(50) NOT NULL,
-    state VARCHAR(50) NOT NULL,
-    pincode VARCHAR(10) NOT NULL,
-    phone VARCHAR(15),
-    email VARCHAR(100),
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(organization_id, name)
-);
-\end{lstlisting}
+branches & id & organization\_id $\rightarrow$ organizations(id) &
+name (Unique per org), address, city, state, pincode, phone, email, is\_active, created\_at, updated\_at \\ \hline
+\end{tabular}
+\caption{Core Multi-Tenant Tables}
+\end{table}
 
 \subsection{User and Role Tables}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{3cm}|p{2cm}|p{4.2cm}|p{6.8cm}|}
+\hline
+\textbf{Table} & \textbf{PK} & \textbf{Foreign Keys (FKs)} & \textbf{Major Attributes} \\ \hline
+users & id &
+organization\_id $\rightarrow$ organizations(id), branch\_id $\rightarrow$ branches(id) &
+role (Enum), email (Unique), password\_hash, first\_name, last\_name, phone, date\_of\_birth, gender (Enum), is\_active, is\_deleted, last\_login, created\_at, updated\_at \\ \hline
 
-\textbf{users}
-\begin{lstlisting}[language=SQL]
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    organization_id INTEGER NOT NULL 
-        REFERENCES organizations(id),
-    branch_id INTEGER REFERENCES branches(id),
-    role VARCHAR(20) NOT NULL CHECK (role IN 
-        ('super_admin', 'org_admin', 'branch_admin',
-         'doctor', 'nurse', 'receptionist', 
-         'pharmacist', 'patient')),
-    email VARCHAR(100) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    first_name VARCHAR(50) NOT NULL,
-    last_name VARCHAR(50) NOT NULL,
-    phone VARCHAR(15),
-    date_of_birth DATE,
-    gender VARCHAR(10) CHECK (gender IN 
-        ('male', 'female', 'other')),
-    is_active BOOLEAN DEFAULT TRUE,
-    is_deleted BOOLEAN DEFAULT FALSE,
-    last_login TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-\end{lstlisting}
+doctors & id &
+user\_id $\rightarrow$ users(id) (Unique) &
+specialization, qualification, experience\_years, license\_number (Unique), consultation\_fee, created\_at \\ \hline
 
-\textbf{doctors}
-\begin{lstlisting}[language=SQL]
-CREATE TABLE doctors (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL UNIQUE 
-        REFERENCES users(id),
-    specialization VARCHAR(100) NOT NULL,
-    qualification VARCHAR(200),
-    experience_years INTEGER CHECK 
-        (experience_years >= 0),
-    license_number VARCHAR(50) UNIQUE,
-    consultation_fee DECIMAL(10,2) CHECK 
-        (consultation_fee > 0),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-\end{lstlisting}
+patients & id &
+user\_id $\rightarrow$ users(id) (Unique), organization\_id $\rightarrow$ organizations(id), branch\_id $\rightarrow$ branches(id) &
+patient\_uid (Unique), blood\_group (Enum), emergency\_contact, emergency\_contact\_name, address, insurance\_provider, insurance\_policy\_number, insurance\_expiry, created\_at, updated\_at \\ \hline
+\end{tabular}
+\caption{User and Role Tables}
+\end{table}
 
-\textbf{patients}
-\begin{lstlisting}[language=SQL]
-CREATE TABLE patients (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL UNIQUE 
-        REFERENCES users(id),
-    organization_id INTEGER NOT NULL 
-        REFERENCES organizations(id),
-    branch_id INTEGER REFERENCES branches(id),
-    patient_uid VARCHAR(50) NOT NULL UNIQUE,
-    blood_group VARCHAR(5) CHECK (blood_group IN 
-        ('A+', 'A-', 'B+', 'B-', 
-         'O+', 'O-', 'AB+', 'AB-')),
-    emergency_contact VARCHAR(15),
-    emergency_contact_name VARCHAR(100),
-    address TEXT,
-    insurance_provider VARCHAR(100),
-    insurance_policy_number VARCHAR(50),
-    insurance_expiry DATE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-\end{lstlisting}
+\subsection{Facility and Admission Tables}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{3cm}|p{2cm}|p{4.2cm}|p{6.8cm}|}
+\hline
+\textbf{Table} & \textbf{PK} & \textbf{Foreign Keys (FKs)} & \textbf{Major Attributes} \\ \hline
+rooms & id &
+branch\_id $\rightarrow$ branches(id) &
+room\_number, room\_type, is\_available, created\_at \\ \hline
+
+admissions & id &
+patient\_id $\rightarrow$ patients(id), room\_id $\rightarrow$ rooms(id), doctor\_id $\rightarrow$ doctors(id) &
+admission\_date, discharge\_date, status, created\_at \\ \hline
+\end{tabular}
+\caption{Facility and Admission Tables}
+\end{table}
 
 \subsection{Clinical Workflow Tables}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{3cm}|p{2cm}|p{4.2cm}|p{6.8cm}|}
+\hline
+\textbf{Table} & \textbf{PK} & \textbf{Foreign Keys (FKs)} & \textbf{Major Attributes} \\ \hline
+appointments & id &
+patient\_id $\rightarrow$ patients(id), doctor\_id $\rightarrow$ doctors(id), room\_id $\rightarrow$ rooms(id), created\_by $\rightarrow$ users(id) &
+appointment\_date, appointment\_time, status (Enum), chief\_complaint, notes, diagnosis, prescription, verdict, created\_at, updated\_at \\ \hline
 
-\textbf{appointments}
-\begin{lstlisting}[language=SQL]
-CREATE TABLE appointments (
-    id SERIAL PRIMARY KEY,
-    patient_id INTEGER NOT NULL 
-        REFERENCES patients(id),
-    doctor_id INTEGER NOT NULL 
-        REFERENCES doctors(id),
-    room_id INTEGER REFERENCES rooms(id),
-    appointment_date DATE NOT NULL,
-    appointment_time TIME NOT NULL,
-    status VARCHAR(20) DEFAULT 'scheduled' 
-        CHECK (status IN ('scheduled', 'accepted', 
-        'rejected', 'completed', 'cancelled', 
-        'admitted')),
-    chief_complaint TEXT,
-    notes TEXT,
-    diagnosis TEXT,
-    prescription TEXT,
-    verdict TEXT,
-    created_by INTEGER REFERENCES users(id),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-\end{lstlisting}
-
-\textbf{telemetry\_data}
-\begin{lstlisting}[language=SQL]
-CREATE TABLE telemetry_data (
-    id SERIAL PRIMARY KEY,
-    patient_id INTEGER NOT NULL 
-        REFERENCES patients(id),
-    admission_id INTEGER REFERENCES admissions(id),
-    recorded_by INTEGER NOT NULL 
-        REFERENCES users(id),
-    heart_rate INTEGER CHECK 
-        (heart_rate BETWEEN 40 AND 200),
-    blood_pressure_systolic INTEGER CHECK 
-        (blood_pressure_systolic BETWEEN 60 AND 250),
-    blood_pressure_diastolic INTEGER CHECK 
-        (blood_pressure_diastolic BETWEEN 40 AND 150),
-    temperature DECIMAL(4,1) CHECK 
-        (temperature BETWEEN 95.0 AND 107.0),
-    oxygen_saturation INTEGER CHECK 
-        (oxygen_saturation BETWEEN 0 AND 100),
-    respiratory_rate INTEGER CHECK 
-        (respiratory_rate BETWEEN 8 AND 60),
-    is_icu BOOLEAN DEFAULT FALSE,
-    critical_alert BOOLEAN DEFAULT FALSE,
-    alert_message TEXT,
-    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-\end{lstlisting}
+telemetry\_data & id &
+patient\_id $\rightarrow$ patients(id), admission\_id $\rightarrow$ admissions(id), recorded\_by $\rightarrow$ users(id) &
+heart\_rate, blood\_pressure\_systolic, blood\_pressure\_diastolic, temperature, oxygen\_saturation, respiratory\_rate, is\_icu, critical\_alert, alert\_message, recorded\_at \\ \hline
+\end{tabular}
+\caption{Clinical Workflow Tables}
+\end{table}
 
 \subsection{Financial Tables}
-
-\textbf{billing}
-\begin{lstlisting}[language=SQL]
-CREATE TABLE billing (
-    id SERIAL PRIMARY KEY,
-    appointment_id INTEGER REFERENCES appointments(id),
-    patient_id INTEGER NOT NULL 
-        REFERENCES patients(id),
-    bill_number VARCHAR(50) NOT NULL UNIQUE,
-    bill_date DATE NOT NULL DEFAULT CURRENT_DATE,
-    consultation_fee DECIMAL(10,2) DEFAULT 0,
-    medication_cost DECIMAL(10,2) DEFAULT 0,
-    room_charges DECIMAL(10,2) DEFAULT 0,
-    test_charges DECIMAL(10,2) DEFAULT 0,
-    other_charges DECIMAL(10,2) DEFAULT 0,
-    subtotal DECIMAL(10,2) NOT NULL,
-    tax DECIMAL(10,2) DEFAULT 0,
-    discount DECIMAL(10,2) DEFAULT 0,
-    total_amount DECIMAL(10,2) NOT NULL,
-    amount_paid DECIMAL(10,2) DEFAULT 0,
-    payment_status VARCHAR(20) DEFAULT 'pending' 
-        CHECK (payment_status IN 
-        ('pending', 'paid', 'partial')),
-    payment_method VARCHAR(20) CHECK 
-        (payment_method IN ('cash', 'card', 
-        'upi', 'insurance', 'online')),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-\end{lstlisting}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{3cm}|p{2cm}|p{4.2cm}|p{6.8cm}|}
+\hline
+\textbf{Table} & \textbf{PK} & \textbf{Foreign Keys (FKs)} & \textbf{Major Attributes} \\ \hline
+billing & id &
+appointment\_id $\rightarrow$ appointments(id), patient\_id $\rightarrow$ patients(id) &
+bill\_number (Unique), bill\_date, consultation\_fee, medication\_cost, room\_charges, test\_charges, other\_charges, subtotal, tax, discount, total\_amount, amount\_paid, payment\_status (Enum), payment\_method (Enum), created\_at \\ \hline
+\end{tabular}
+\caption{Financial Tables}
+\end{table}
 
 \subsection{Pharmacy Tables}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{3cm}|p{2cm}|p{4.2cm}|p{6.8cm}|}
+\hline
+\textbf{Table} & \textbf{PK} & \textbf{Foreign Keys (FKs)} & \textbf{Major Attributes} \\ \hline
+inventory & id &
+branch\_id $\rightarrow$ branches(id) &
+medicine\_name, generic\_name, manufacturer, batch\_number, quantity\_in\_stock, unit\_price, expiry\_date, reorder\_level, created\_at, updated\_at \\ \hline
+\end{tabular}
+\caption{Pharmacy Tables}
+\end{table}
 
-\textbf{inventory}
-\begin{lstlisting}[language=SQL]
-CREATE TABLE inventory (
-    id SERIAL PRIMARY KEY,
-    branch_id INTEGER NOT NULL 
-        REFERENCES branches(id),
-    medicine_name VARCHAR(200) NOT NULL,
-    generic_name VARCHAR(200),
-    manufacturer VARCHAR(100),
-    batch_number VARCHAR(50),
-    quantity_in_stock INTEGER NOT NULL CHECK 
-        (quantity_in_stock >= 0),
-    unit_price DECIMAL(10,2) NOT NULL CHECK 
-        (unit_price > 0),
-    expiry_date DATE,
-    reorder_level INTEGER DEFAULT 10,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(branch_id, medicine_name, batch_number)
-);
-\end{lstlisting}
-
+% ==================== CONSTRAINTS + INDEXES (TABLE ONLY) ====================
 \section{Key Constraints and Indexes}
 
-\subsection{Foreign Key Constraints}
+\subsection{Referential Integrity Rules}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{4cm}|p{11cm}|}
+\hline
+\textbf{Constraint Type} & \textbf{Purpose in IHORMS} \\ \hline
+Foreign Keys (FK) & Enforces valid relationships between tenants, branches, users, and workflow records. \\ \hline
+Unique Constraints & Prevents duplicate critical identifiers such as email, patient\_uid, license\_number, and bill\_number. \\ \hline
+Check Constraints & Restricts invalid values for enumerations and numeric ranges (roles, statuses, vitals, payments). \\ \hline
+Nullable FKs where required & Supports operational flexibility such as optional room allocation for appointments. \\ \hline
+\end{tabular}
+\caption{Referential Integrity Rules}
+\end{table}
 
-All relationships enforce referential integrity through foreign key constraints with appropriate ON DELETE and ON UPDATE behaviors:
-
-\textbf{CASCADE Deletes}: Organization deletion cascades to branches and users, ensuring orphan records cannot exist.
-
-\textbf{RESTRICT Deletes}: Patient deletion is restricted if appointments exist, preventing accidental data loss.
-
-\textbf{SET NULL Updates}: If a room is demolished, existing appointments have room\_id set to NULL.
-
-\subsection{Performance Indexes}
-
-Critical queries are optimized through strategic B-tree indexing:
-
-\textbf{idx\_user\_email}: Accelerates login authentication queries filtering by email address.
-
-\textbf{idx\_appointment\_date\_doctor}: Composite index on (appointment\_date, doctor\_id) enables efficient daily schedule retrieval.
-
-\textbf{idx\_medical\_history\_patient\_date}: Composite index on (patient\_id, visit\_date DESC) optimizes patient timeline queries.
-
-\textbf{idx\_telemetry\_critical}: Partial index on critical\_alert WHERE critical\_alert = TRUE enables instant emergency patient identification.
-
-\textbf{idx\_billing\_date}: Facilitates revenue analytics queries aggregating billing data by date ranges.
+\subsection{Performance Index Strategy}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{4cm}|p{4cm}|p{7cm}|}
+\hline
+\textbf{Index Name} & \textbf{Target Columns} & \textbf{Optimization Benefit} \\ \hline
+idx\_user\_email & users(email) & Accelerates login authentication and user lookup by email. \\ \hline
+idx\_appointment\_date\_doctor & appointments(appointment\_date, doctor\_id) & Optimizes doctor schedule retrieval by date and doctor. \\ \hline
+idx\_telemetry\_critical & telemetry\_data(critical\_alert) WHERE critical\_alert=TRUE & Enables fast filtering of critical patient telemetry alerts. \\ \hline
+idx\_billing\_date & billing(bill\_date) & Speeds up billing analytics and revenue reporting by date range. \\ \hline
+\end{tabular}
+\caption{Index Strategy Summary}
+\end{table}
 
 % ==================== CHAPTER 6: CONCLUSION ====================
 \chapter{CONCLUSION}
+The Integrated Hospital Resource Management System (IHORMS) demonstrates the practical application of strong database design principles to address real-world healthcare workflow challenges. By normalizing the schema up to Third Normal Form (3NF) and implementing a structured ER model and DFD decomposition, the system delivers a scalable multi-tenant hospital management solution.
 
-The Integrated Hospital Resource Management System (IHORMS) successfully demonstrates the application of rigorous database design principles to solve real-world healthcare challenges. Through systematic normalization to Third Normal Form, comprehensive entity-relationship modeling, and hierarchical data flow decomposition, the project delivers a production-ready multi-tenant hospital management platform.
+Key outcomes include ML-based doctor recommendation, real-time telemetry monitoring with automated critical alerts, integrated billing, and role-based access control to support secure and compliant operations. The database design ensures minimal redundancy, strong referential integrity through foreign key constraints, data validation via check constraints, and optimized performance using strategic indexing.
 
-The project's core achievements include implementation of intelligent ML-based doctor recommendation reducing patient triage errors, real-time telemetry monitoring with automated critical alerts enabling proactive patient care, comprehensive billing integration streamlining financial operations, and role-based access control ensuring HIPAA compliance through granular permission management.
-
-From a database design perspective, IHORMS exemplifies successful normalization implementation eliminating data redundancy while supporting complex multi-table queries. The schema's careful foreign key constraint design ensures referential integrity, strategic indexing achieves sub-200ms query performance even with millions of records, and check constraints enforce data validity at the storage layer.
-
-The hierarchical DFD decomposition from context diagram through Level 2 sub-processes provided clear technical specifications guiding implementation. The ER diagram's comprehensive entity modeling captured all business requirements through careful attribute assignment and relationship cardinality definition.
-
-IHORMS positions itself as a scalable foundation for future enhancements including medical imaging integration, laboratory information system connectivity, insurance provider API integration for real-time claim processing, mobile applications for bedside documentation, advanced predictive analytics for readmission risk scoring, telemedicine capabilities, IoT device integration for automatic vital sign recording, and natural language processing for voice-dictated clinical notes.
-
-The project successfully bridges theoretical database concepts taught in academic curricula with practical implementation requirements of enterprise healthcare systems. By adhering to normalization principles while pragmatically balancing performance considerations, IHORMS demonstrates mature database design judgment.
-
-In conclusion, IHORMS validates that carefully architected database systems can transform fragmented hospital operations into cohesive, data-driven healthcare networks. The system's modular architecture, normalized schema, and scalable infrastructure position it for continued evolution as healthcare technology advances.
-
+Overall, IHORMS bridges academic database concepts with enterprise implementation requirements and provides a solid foundation for future upgrades such as IoT integration, telemedicine, insurance API connectivity, and predictive analytics.
 % ==================== CHAPTER 7: REFERENCES ====================
 \chapter{REFERENCES}
 
@@ -1041,7 +942,7 @@ This appendix presents comprehensive system screenshots documenting all user int
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{loginpage.png}
+\includegraphics[width=0.65\textwidth]{loginpage.png}
 \caption{Unified Login Portal - Single sign-on interface where all users authenticate using email and password. The backend validates credentials, determines user role, and routes to role-appropriate dashboard.}
 \label{fig:login}
 \end{figure}
@@ -1050,7 +951,7 @@ This appendix presents comprehensive system screenshots documenting all user int
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.9\textwidth]{doctorportal.png}
+\includegraphics[width=0.8\textwidth]{doctorportal.png}
 \caption{Doctor Dashboard Interface - Daily appointment schedule showing patient names, appointment times, chief complaints, and consultation room assignments. Doctors can search patients and access complete medical histories.}
 \label{fig:doctor_portal}
 \end{figure}
@@ -1155,7 +1056,7 @@ This appendix presents comprehensive system screenshots documenting all user int
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.9\textwidth]{superadminpannel.png}
+\includegraphics[width=0.8\textwidth]{superadminpannel.png}
 \caption{Super Admin Platform Management - Platform-level interface for managing multiple hospital organizations, viewing system-wide metrics, and configuring global settings for SaaS deployment scenarios.}
 \label{fig:super_admin}
 \end{figure}
@@ -1165,7 +1066,7 @@ This appendix presents comprehensive system screenshots documenting all user int
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.9\textwidth]{patientsearch.png}
-\caption{Advanced Patient Search with Fuzzy Matching - Sophisticated search functionality supporting lookups by patient UID, name, phone number, or appointment date with fuzzy matching handling typos and partial matches.}
+\caption{Patient UID Lookup – Simple and efficient search functionality allowing staff to retrieve patient records instantly using the unique Patient UID.}
 \label{fig:patient_search}
 \end{figure}
 
