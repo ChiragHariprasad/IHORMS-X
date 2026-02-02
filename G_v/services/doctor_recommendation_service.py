@@ -136,7 +136,8 @@ class DoctorRecommendationService:
             
             if score > 0:
                 recommendations.append(({
-                    "id": user.id,
+                    "id": doctor.id,
+                    "user_id": user.id,
                     "name": f"Dr. {user.first_name} {user.last_name}",
                     "specialization": doctor.specialization,
                     "qualification": doctor.qualification,

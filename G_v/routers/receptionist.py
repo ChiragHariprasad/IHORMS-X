@@ -31,11 +31,22 @@ def list_branch_doctors(
     db: Session = Depends(get_db),
     staff: User = Depends(get_receptionist)
 ):
-    from services.user_service import UserService
-    from models import UserRole
-    service = UserService(db)
-    doctors, _ = service.get_staff_by_branch(staff.branch_id, role=UserRole.DOCTOR)
-    return doctors
+    from models import UserRole, Doctor
+    doctors = db.query(User, Doctor).join(Doctor, User.id == Doctor.user_id).filter(
+        User.branch_id == staff.branch_id,
+        User.role == UserRole.DOCTOR,
+        User.is_deleted == False
+    ).all()
+    
+    return [
+        {
+            "id": d.id,
+            "user_id": u.id,
+            "first_name": u.first_name,
+            "last_name": u.last_name,
+            "specialization": d.specialization
+        } for u, d in doctors
+    ]
 
 @router.get("/doctors/recommend")
 def recommend_doctors_for_symptoms(

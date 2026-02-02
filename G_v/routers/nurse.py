@@ -7,7 +7,7 @@ from typing import List
 
 from database import get_db
 from models import User
-from schemas.clinical import TelemetryCreate, TelemetryResponse, RoomResponse
+from schemas.clinical import TelemetryCreate, TelemetryResponse, RoomResponse, AdmissionResponse
 from schemas.appointment import AppointmentResponse
 from services.clinical_service import ClinicalService
 from services.appointment_service import AppointmentService
@@ -67,7 +67,7 @@ def list_ward_rooms(
             
     return rooms
 
-@router.get("/admissions")
+@router.get("/admissions", response_model=List[AdmissionResponse])
 def get_admitted_patients(
     db: Session = Depends(get_db),
     nurse: User = Depends(get_nurse)

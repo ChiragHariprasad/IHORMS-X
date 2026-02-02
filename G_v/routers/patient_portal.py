@@ -58,7 +58,8 @@ def list_available_doctors(
     doctors = db.query(User, Doctor).join(Doctor, User.id == Doctor.user_id).filter(User.role == UserRole.DOCTOR).all()
     return [
         {
-            "id": u.id,
+            "id": d.id,
+            "user_id": u.id,
             "first_name": u.first_name,
             "last_name": u.last_name,
             "specialization": d.specialization

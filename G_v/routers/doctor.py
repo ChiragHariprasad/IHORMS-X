@@ -12,7 +12,7 @@ from schemas.appointment import (
     AppointmentResponse, AppointmentDetailResponse, 
     DoctorNotesUpdate, DoctorScheduleResponse
 )
-from schemas.clinical import MedicalHistoryResponse
+from schemas.clinical import MedicalHistoryResponse, AdmissionResponse
 from schemas.patient import PatientResponse
 from services.appointment_service import AppointmentService
 from services.patient_service import PatientService
@@ -105,7 +105,7 @@ def find_patient_by_uid(
         raise HTTPException(status_code=404, detail="Patient not found")
     return patient
 
-@router.get("/discharge-requests")
+@router.get("/discharge-requests", response_model=List[AdmissionResponse])
 def get_discharge_requests(
     db: Session = Depends(get_db),
     doctor: User = Depends(get_doctor)

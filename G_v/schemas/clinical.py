@@ -96,3 +96,20 @@ class EquipmentResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+class AdmissionResponse(BaseModel):
+    id: int
+    patient_id: int
+    patient_name: str
+    doctor_id: int
+    appointment_id: int
+    room_id: Optional[int]
+    room_number: Optional[str]
+    room_type: Optional[str]
+    admission_date: datetime
+    status: str
+    discharge_requested: bool
+    
+    class Config:
+        from_attributes = True
